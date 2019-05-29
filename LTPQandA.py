@@ -141,6 +141,10 @@ def print_answer(property, entity, is_count):
             wd:%s wdt:%s ?albums .
         } ''' % (entity, property)
         # if is count didn't yield anything try implementing something that tries without count (string of guitar case)
+
+    if is_two_entities:
+	query = '''ASK WHERE {wd:%s ?prop wd:%s}'''%(ent1,ent2)
+	
     else:
         query = '''
         SELECT ?property WHERE { 
@@ -321,6 +325,12 @@ def reduce_ambiguity(value, ent_prop, index):
         if iteration == index:  # if the first result didn't give an answer
             return result['id']
     return "empty"  # at the end of the ambiguation list, return empty so no redundant empty statements are evaluated
+
+
+def two_entities(ent1,ent2):
+	
+
+	
 
 
 def main(argv):
