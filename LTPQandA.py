@@ -55,7 +55,10 @@ qprint = "Please enter a question or quit program by pressing control-D."
 def print_example_queries():
 	for index, example in enumerate(example_queries):
 		print("("+str(index+1)+") "+example)
+		create_and_fire_query(example)
 	print(qprint)
+
+
 
 def print_answer(property, entity, is_count):
     date = False
@@ -180,14 +183,17 @@ def create_and_fire_query(line):
         ent_query = reduce_ambiguity(ent, ENTITY, FIRST_TRY)
         found_result = print_answer(prop_query, ent_query, is_count)
 
+    # the following can be combined with 145-179!!!
     if not found_result:
         for prop in parse:
             if prop.pos_ == 'ADJ' and prop.lemma_ == 'many':  # Uses the word 'many' to indicate counting (maybe also use 'number of'?)
+                print("now here adj")
                 is_count = True
 
             # If the property consists of multiple words join them together
             if not found_result and (prop.dep_ == 'compound' and prop.tag_ == 'NN') or \
                     (prop.pos_ == 'ADJ' and prop.dep_ == 'amod'):
+                print("now here amod en zo")
                 # Dit verandert naar prop.text ipv prop,lemma_ omdat je het volledige bijv naamwoord wilt (e.g. highest note)
                 query_property = " ".join((prop.text, prop.head.lemma_))
                 property = reduce_ambiguity(query_property, PROPERTY, FIRST_TRY)
@@ -198,6 +204,7 @@ def create_and_fire_query(line):
             # This fires (mostly) for NOUNS (some entities as well if the not condition is omitted)
             if prop.dep_ != 'compound' and (prop.dep_ == 'nsubj' or prop.dep_ == 'attr' or prop.tag_ == 'NN') and \
                     not found_result and query_entity != prop.lemma_:
+                print("now here compound")
                 query_property = prop.lemma_
                 if ('member' or 'members') in query_property:  # change member in part of since that is how it is referenced in WikiData
                     query_property = 'has part'
@@ -208,6 +215,7 @@ def create_and_fire_query(line):
                     found_result = try_disambiguation(query_property, query_entity, is_count, found_result)
 
             if prop.dep_ == 'acl' or prop.dep_ == 'dobj' and not found_result:  # The dobj is mainly for count questions
+                print("now here acl")
                 query_property = prop.text
                 property = reduce_ambiguity(query_property, PROPERTY, FIRST_TRY)
                 # print('query_prop3: ' + str(query_property) + ' property3: ' + str(property))
@@ -219,6 +227,7 @@ def create_and_fire_query(line):
                     found_result = try_disambiguation(query_property, query_entity, is_count, found_result)
 
             if prop.dep_ == 'ROOT' and not found_result:
+                print("now here root")
                 query_property = prop.head.lemma_
                 # If the root is 'to be' don't look up property (irrelevant to do and erroneous results)
                 if not query_property == 'be':
