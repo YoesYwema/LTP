@@ -207,10 +207,6 @@ def create_and_fire_query(line):
                 entity = reduce_ambiguity(query_entity, ENTITY, FIRST_TRY)
                 # print('query_ent2: ' + str(query_entity) + ' entity2: ' + str(entity))
 
-    # nountags = ["NN", "NNS", "NNP", "NNPS"]
-    # thingsOf = {"When": "date", "Where": "place", "many": "number", "long": "duration", "old": "age", "How": "cause"}
-
-
     ent = ""
     prop = ""
 
@@ -250,9 +246,10 @@ def create_and_fire_query(line):
             else:
                 ent = ent + token.text + " "
 
-    prop_query = reduce_ambiguity(prop, PROPERTY, FIRST_TRY)
-    ent_query = reduce_ambiguity(ent, ENTITY, FIRST_TRY)
-    found_result = print_answer(prop_query, ent_query, is_count)
+    if not prop == "" and not ent == "":
+        prop_query = reduce_ambiguity(prop, PROPERTY, FIRST_TRY)
+        ent_query = reduce_ambiguity(ent, ENTITY, FIRST_TRY)
+        found_result = print_answer(prop_query, ent_query, is_count)
 
     if not found_result:
         for prop in parse:
@@ -315,9 +312,9 @@ def reduce_ambiguity(value, ent_prop, index):
     json = requests.get(url2, params).json()
     # if not json['search']:
     #     print("help, ent/prop= ", value)
-    if not json['search']:
-        print("HELP")
-        return "empty"
+    # if not json['search']:
+    #     print("HELP")
+    #     return "empty"
     for iteration, result in enumerate(json['search'], start=0):
         if index == FIRST_TRY:  # return only the first result, since that is the most referenced one
             return result['id']
@@ -327,7 +324,7 @@ def reduce_ambiguity(value, ent_prop, index):
 
 
 def main(argv):
-    #print_example_queries()
+    print_example_queries()
     for line in sys.stdin:
         # line = example_queries[int(line)-1].rstrip()  # removes newline
         line = line.rstrip()
