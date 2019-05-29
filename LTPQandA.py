@@ -15,47 +15,17 @@ EMPTY = 0
 nountags = ["NN", "NNS", "NNP", "NNPS"]
 thingsOf = {"When": "date", "Where": "place", "many": "number", "long": "duration", "old": "age", "How": "cause"}
 
-# "Name the record labels of John Mayer .",
-# "When is the birthdate of Eminem ?",
-# "Where is the birthplace of Bob Marley ?",
-# "Who are the children of Phill Collins ?",
-# "Where was the origin of Coldplay ?",
-# "What was the cause of death of Mozart ?",
-# "When is the deathdate of John Lennon ?",
-# "Who was the father of Michael Jackson ?",
-# "What is the gender of Conchita Wurst ?",
-# "Name the partners of Bruce Springsteen .",
-# "Who were the husbands of Yoko Ono?",
-# "What is the birthdate of Jimi Hendrix?",
-# "what were the pseudonyms of David Bowie",
-# "What is the date of death of Prince?",
-# "what is the number of children of Adele",
-# "what were the causes of death of Michael Jackson?",
-# "what is the birthname of Lady Gaga?",
-# "what are the genres of the White Stripes?",
-# "What is the highest note of a piano?",
-# "Who were the members of The Beatles"
-# "Who were the husbands of Yoko Ono?",
-# "What is the birthdate of Jimi Hendrix?",
-# "what were the pseudonyms of David Bowie",
-# "What is the date of death of Prince?",
-# "what is the number of children of Adele",
-# "what were the causes of death of Michael Jackson?",
-# "what is the birthname of Lady Gaga?",
-# "what are the genres of the White Stripes?",
-# "Who were the members of The Beatles",
-# "What is the highest note of a piano?",
-example_queries = '''
-    "Name the record labels of John Mayer .",
-    "When is the birthdate of Eminem ?",
-    "Where is the birthplace of Bob Marley ?",
-    "Who are the children of Phill Collins ?",
-    "Where was the origin of Coldplay ?",
-    "What was the cause of death of Mozart ?",
-    "When is the deathdate of John Lennon ?",
-    "Who was the father of Michael Jackson ?",
-    "What is the gender of Conchita Wurst ?",
-    "Name the partners of Bruce Springsteen .",
+example_queries = [
+    "Name the record labels of John Mayer.",
+    "When is the birthdate of Eminem?",
+    "Where is the birthplace of Bob Marley?",
+    "Who are the children of Phill Collins?",
+    "Where was the origin of Coldplay?",
+    "What was the cause of death of Mozart?",
+    "When is the deathdate of John Lennon?",
+    "Who was the father of Michael Jackson?",
+    "What is the gender of Conchita Wurst?",
+    "Name the partners of Bruce Springsteen.",
     "Who were the husbands of Yoko Ono?", 
     "When was Jimi Hendrix born?",
     "which were the pseudonyms of David Bowie", 
@@ -65,68 +35,27 @@ example_queries = '''
     "what is Lady Gaga's birth name?", 
     "what are the genres of The White Stripes?",
     "What is the highest note of a piano?", 
-    "Who were the members of The Beatles"
-    Who is the stepparent of Neneh Cherry
-    What is the record label of The Clash
-    How many members does Nirvana have?
-    Which country is Queen from?
-    What is the birth place of B. B. King?
-    Who are the members of Metallica?
-    What is the birth name of Eminem?
-    What is the website of Mumford and Sons ?
-    Who was the composer of The Four Seasons?
-    What is the birth date of Elvis Presley?
-    Who is the father of Miley Cyrus?
-    '''
+    "Who were the members of The Beatles",
+    "Who is the stepparent of Neneh Cherry",
+    "What is the record label of The Clash",
+    "How many members does Nirvana have?",
+    "Which country is Queen from?",
+    "What is the birth place of B. B. King?",
+    "Who are the members of Metallica?",
+    "What is the birth name of Eminem?",
+    "What is the website of Mumford and Sons ?",
+    "Who was the composer of The Four Seasons?",
+    "What is the birth date of Elvis Presley?",
+    "Who is the father of Miley Cyrus?",
+    "How long is Bohemian Rhapsody?"]
+    
+errormsg = "no data found. Try paraphrasing the question (e.g. Prince becomes TAFKAP)."
+qprint = "Please enter a question or quit program by pressing control-D."
 
 def print_example_queries():
-    example_queries = '''
-    "Name the record labels of John Mayer .",
-    "When is the birthdate of Eminem ?",
-    "Where is the birthplace of Bob Marley ?",
-    "Who are the children of Phill Collins ?",
-    "Where was the origin of Coldplay ?",
-    "What was the cause of death of Mozart ?",
-    "When is the deathdate of John Lennon ?",
-    "Who was the father of Michael Jackson ?",
-    "What is the gender of Conchita Wurst ?",
-    "Name the partners of Bruce Springsteen .",
-    "Who were the husbands of Yoko Ono?",
-    "What is the birthdate of Jimi Hendrix?",
-    "what were the pseudonyms of David Bowie",
-    "What is the date of death of Prince?",
-    "what is the number of children of Adele",
-    "what were the causes of death of Michael Jackson?",
-    "what is the birthname of Lady Gaga?",
-    "what are the genres of the White Stripes?",
-    "What is the highest note of a piano?",
-    "Who were the members of The Beatles"
-    "Who were the husbands of Yoko Ono?",
-    "What is the birthdate of Jimi Hendrix?",
-    "what were the pseudonyms of David Bowie",
-    "What is the date of death of Prince?",
-    "what is the number of children of Adele",
-    "what were the causes of death of Michael Jackson?",
-    "what is the birthname of Lady Gaga?",
-    "what are the genres of the White Stripes?",
-    "Who were the members of The Beatles",
-    "What is the highest note of a piano?",
-    Who is the stepparent of Neneh Cherry
-    What is the record label of The Clash
-    How many members does Nirvana have?
-    Which country is Queen from?
-    What is the birth place of B. B. King?
-    Who are the members of Metallica?
-    What is the birth name of Eminem?
-    What is the website of Mumford and Sons ?
-    Who was the composer of The Four Seasons?
-    What is the birth date of Elvis Presley?
-    Who is the father of Miley Cyrus?
-    '''
-    for questions in example_queries.splitlines():
-        print(questions)
-        create_and_fire_query(questions)
-
+	for index, example in enumerate(example_queries):
+		print("("+str(index+1)+") "+example)
+	print(qprint)
 
 def print_answer(property, entity, is_count):
     date = False
@@ -299,7 +228,7 @@ def create_and_fire_query(line):
                     if not found_result:
                         found_result = try_disambiguation(query_property, query_entity, is_count, found_result)
         if not found_result and line:  # and line means the line is not empty
-            print("No answer found. Try paraphrasing the question.")
+            print(errormsg)
 
 
 def reduce_ambiguity(value, ent_prop, index):
@@ -326,8 +255,8 @@ def reduce_ambiguity(value, ent_prop, index):
 def main(argv):
     print_example_queries()
     for line in sys.stdin:
-        # line = example_queries[int(line)-1].rstrip()  # removes newline
-        line = line.rstrip()
+        line = example_queries[int(line)-1].rstrip()
+        #line = line.rstrip()
         create_and_fire_query(line)
 
 
