@@ -63,17 +63,18 @@ examples = [
     "Did Michael Jackson play in a band?", #ent + prop (?)
     "Do The Fals make indie rock?", #2x entity (?)
     "Is Michael Jackson male?", #2x entity
-    "Is Miley Cyrus the daughter of Billy Ray Cyrus?" #2x entity
-    "Does deadmau5 make house music?" #2x entity
-    
-    #extra things
-    ''', "How old was Ella Fitzgerald when she died?",
-    "How old is Eminem?", #also qualified
-    "What is the age of Eminem", #also qualified
-    "Who was the first husband of Yoko Ono?"
-    "Who was Mozarts oldest child?",
-    "To which musical genre(s) can The White Stripes be assigned?"'''
+    "Is Miley Cyrus the daughter of Billy Ray Cyrus?", #2x entity
+    "Does deadmau5 make house music?", #2x entity
     ]
+    
+
+#questions to test extra things on
+''', "How old was Ella Fitzgerald when she died?",
+"How old is Eminem?", #also qualified
+"What is the age of Eminem", #also qualified
+"Who was the first husband of Yoko Ono?"
+"Who was Mozarts oldest child?",
+"To which musical genre(s) can The White Stripes be assigned?"'''
 
 errormsg = "no data found. Try paraphrasing the question (e.g. Prince becomes TAFKAP)."
 qprint = "Please enter a question or quit program by pressing control-D."
