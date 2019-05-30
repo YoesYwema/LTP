@@ -16,38 +16,72 @@ nountags = ["NN", "NNS", "NNP", "NNPS"]
 thingsOf = {"When": "date", "Where": "place", "many": "number", "long": "duration", "old": "age", "How": "cause"}
 
 example_queries = [
-    "Name the record labels of John Mayer.",
-    "When is the birthdate of Eminem?",
-    "Where is the birthplace of Bob Marley?",
-    "Who are the children of Phill Collins?",
-    "Where was the origin of Coldplay?",
-    "What was the cause of death of Mozart?",
-    "When is the deathdate of John Lennon?",
-    "Who was the father of Michael Jackson?",
+	#What-questions
+	"What was the cause of death of Mozart?",
+	"What were the causes of death of Michael Jackson?",
     "What is the gender of Conchita Wurst?",
-    "Name the partners of Bruce Springsteen.",
-    "Who were the husbands of Yoko Ono?", 
-    "When was Jimi Hendrix born?",
-    "which were the pseudonyms of David Bowie", 
-    "When did Prince die?",
-    "How many children does Adele have?", 
-    "How did Michael Jackson die?",
-    "what is Lady Gaga's birth name?", 
-    "what are the genres of The White Stripes?",
-    "What is the highest note of a piano?", 
-    "Who were the members of The Beatles",
-    "Who is the stepparent of Neneh Cherry",
+    "What is the highest note of a piano?", #defined
     "What is the record label of The Clash",
-    "How many members does Nirvana have?",
-    "Which country is Queen from?",
-    "What is the birth place of B. B. King?",
-    "Who are the members of Metallica?",
-    "What is the birth name of Eminem?",
-    "What is the website of Mumford and Sons ?",
-    "Who was the composer of The Four Seasons?",
+    "What is the real name of Eminem?", #real name ipv birth name, werkt dat? 
+    "What is the website of Mumford and Sons?", #Mumford & Sons?
     "What is the birth date of Elvis Presley?",
-    "Who is the father of Miley Cyrus?",
-    "How long is Bohemian Rhapsody?"]
+    
+    #Who-questions
+    "Who was the composer of The Four Seasons?",
+    "Who was the father of Michael Jackson?",
+    "Who is the stepparent of Neneh Cherry",
+    
+    #Qualified statement questions
+    "Who are the members of Metallica?",
+    "Who is the wife of John Mayer?", #niet heel qualified, feel free to add
+    
+    #List questions
+    "Name the record labels of John Mayer.",
+	"Name the partners of Bruce Springsteen.",
+	"what are the genres of the White Stripes?",
+	"Who were in Queen?",
+	"Who were the members of The Beatles",
+	"Who are the children of Phill Collins?",
+	"which were the pseudonyms of David Bowie",
+	
+    #Rewritten What-questions
+    "Where is the birthplace of Bob Marley?",
+    "Where was the origin of Coldplay?",
+    "When is the deathdate of John Lennon?",
+    "When was Jimi Hendrix born?",
+    "When did Prince die?",
+    "How did Michael Jackson die?", #meerdere oorzaken
+    "How did Tupac Shakur die?", #een oorzaak
+    "what is Lady Gaga's birth name?", 
+    "Which country is Queen from?",
+    "How long is Bohemian Rhapsody?"
+    "In what city was Die Antwoord formed?",
+    "What year was the song ’1999’ by Prince published?",
+    "For what genre are music duo The Upbeats best known?",
+    "What does EDM stand for?", #definition
+    "What is a kazoo?",	#definition
+    
+    #count questions
+    "How many members does Nirvana have?",
+    "How many children does Adele have?", #defined
+    #feel free to add
+    
+    #yes/no questions
+    "Did Prince die?", #ent+prop
+    "Did Michael Jackson play in a band?", #ent + prop (?)
+    "Do The Fals make indie rock?", #2x entity (?)
+    "Is Michael Jackson male?", #2x entity
+    "Is Miley Cyrus the daughter of Billy Ray Cyrus?" #2x entity
+    "Does deadmau5 make house music?" #2x entity
+    
+    #extra things
+    ''', "How old was Ella Fitzgerald when she died?",
+    "How old is Eminem?", #also qualified
+    "What is the age of Eminem", #also qualified
+    "Who was the first husband of Yoko Ono?"
+    "Who was Mozarts oldest child?",
+    "To which musical genre(s) can The White Stripes be assigned?"'''
+    ]
     
 errormsg = "no data found. Try paraphrasing the question (e.g. Prince becomes TAFKAP)."
 qprint = "Please enter a question or quit program by pressing control-D."
@@ -57,8 +91,6 @@ def print_example_queries():
 		print("("+str(index+1)+") "+example)
 		create_and_fire_query(example)
 	print(qprint)
-
-
 
 def print_answer(property, entity, is_count):
     date = False
@@ -264,8 +296,8 @@ def reduce_ambiguity(value, ent_prop, index):
 def main(argv):
     print_example_queries()
     for line in sys.stdin:
-        line = example_queries[int(line)-1].rstrip()
-        #line = line.rstrip()
+        #line = example_queries[int(line)-1].rstrip()
+        line = line.rstrip()
         create_and_fire_query(line)
 
 
