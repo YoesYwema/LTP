@@ -186,6 +186,19 @@ def find_tag(name, ent_or_prop, index):
     return "empty"  # at the end of the API list, return empty so no redundant empty statements are evaluated
 
 
+def yes_no_query(entity, entity2):
+    query = '''
+            ASK WHERE {wd:%s ?prop wd:%s}
+            ''' % (entity, entity2)
+    data = requests.get(sparql_url,
+                        params={'query': query, 'format': 'json'}).json()
+    if data['boolean']:
+        print("    ANSWER: Yes")
+    else:
+        print("    ANSWER: No")
+    return True
+
+
 '''This function first looks for entity names in the line, then  '''
 def create_and_fire_query(line):
     nlp = spacy.load('en')
@@ -194,91 +207,121 @@ def create_and_fire_query(line):
     entity_tag = 'None'
     found_result = False
     is_count = False
-
+    is_yes_no = False
     ent_name = ""
     prop_name = ""
-    '''QUICK FIND'''
-    for token in parse:
-        if token.pos_ == "ADJ":
-            if "st" in token.text:
-                print("ADJective property: -" + prop_name + token.text + "-")
-                prop_name = prop_name + token.text + " "
 
-        elif token.dep_ == "advmod":
-            if token.text in things_of:
-                if token.head.lemma_ in things_of:
-                    print("Property: -" + prop_name + things_of[token.head.lemma_] + "- Token head lemma of Adverbial modifier (advmod)")
-                    prop_name = prop_name + things_of[token.head.lemma_]
-                else:
-                    print("Property: -" + prop_name + things_of[token.text] + "- Token text of Adverbial modifier (advmod)")
-                    prop_name = prop_name + things_of[token.text]
-                if token.head.lemma_ != "long":
-                    print("Property: " + prop_name + " of- Long Adverbial modifier (advmod)")
-                    prop_name = prop_name + " of "
+    '''YES/NO QUESTIONS'''
+    # If the first word is a form of to be or to do it is a Yes/No question
+    if parse: # if parse is not null
+        if parse[0].lemma_ == 'do' or parse[0].lemma_ == 'be':
+            print("This is a YES/NO question")
+            is_yes_no = True
+            entity_tag2 = 'None'
 
-        elif token.dep_ == "ROOT" or token.dep_ == "advcl":
-            if token.text == "born":
-                prop_name = prop_name + "birth"
-            elif token.lemma_ == "die":
-                prop_name = prop_name + "death"
-            elif token.lemma_ == "come":
-                prop_name = prop_name + "origin"
-            print("Property: -" + prop_name + "- ROOT or adverbial clause modifier (advcl). It's birth, death or origin")
+    '''Look for entitiy'''
+    i = 0
+    for ent_name in parse.ents:  # Try to find the entity with the entity method first
+        if i == 0:
+            entity_name = ent_name.lemma_
+            entity_tag = find_tag(entity_name, ENTITY, FIRST_TRY)
+            print('Found slow entity in parse.ents. Entity_tag: -' + str(entity_name) + '- entity: -' + str(
+                entity_tag) + "-")
+            i += 1
+        else:
+            entity_name2 = ent_name.lemma_
+            entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY)
+            print('Found slow entity2 in parse.ents. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(
+                entity_tag2) + "-")
 
-        elif token.tag_ in nountags:
-            # If P is in the token tag, then its token text is an entity
-            if not "P" in token.tag_:  # MOET DIT NIET OMGEKEERD ZIJN if "P" not in???
-                if prop_name in things_of.values():
-                    prop_name = prop_name + " of " + token.lemma_
-                    print("Property: -" + prop_name + "- P is not in token tag. In things_of found")
-                elif token.dep_ != "pobj":
-                    # If 'S' is in the token tag, then it's probably plural (NNS or NNPS). Therefore use token text.
-                    if (token.text == "members") or not ("S" in token.tag_):
-                        prop_name = prop_name + token.text
-                        print("Property: -" + prop_name + "- Not object of a preposition (pobj). No 'S' in token tag")
+    if is_yes_no:
+        for ent_name2 in parse:
+            if ent_name2.pos_ == 'PROPN' and ent_name2.dep_ == 'compound':
+                entity_name2 = " ".join((ent_name2.lemma_, ent_name2.head.lemma_))
+                entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY)
+                print('Found slow entity in parse.ents. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(
+                    entity_tag2) + "-")
+                break
+        if entity_tag2 != 'None':  # if entity 2 is not empty
+            found_result = yes_no_query(entity_tag, entity_tag2)
+
+    if entity_name == 'None':  # If no entity was found use the proper noun or object method to find entity
+        for ent_name in parse:
+            if ent_name.pos_ == 'PROPN' or ent_name.dep_ == 'pobj':
+                entity_name = ent_name.lemma_
+                entity_tag = find_tag(entity_name, ENTITY, FIRST_TRY)
+                print('Found slow entity as proper noun or pobj. Query_ent: -' + str(
+                    entity_name) + '- entity: -' + str(entity_tag) + "-")
+
+    if not found_result:
+        '''QUICK FIND'''
+        for token in parse:
+            if token.pos_ == "ADJ":
+                if "st" in token.text:
+                    print("ADJective property: -" + prop_name + token.text + "-")
+                    prop_name = prop_name + token.text + " "
+
+            elif token.dep_ == "advmod":
+                if token.text in things_of:
+                    if token.head.lemma_ in things_of:
+                        print("Property: -" + prop_name + things_of[token.head.lemma_] + "- Token head lemma of Adverbial modifier (advmod)")
+                        prop_name = prop_name + things_of[token.head.lemma_]
                     else:
-                        prop_name = prop_name + token.lemma_
-                        print("Property: -" + prop_name + "- Object of a preposition (pobj)")
+                        print("Property: -" + prop_name + things_of[token.text] + "- Token text of Adverbial modifier (advmod)")
+                        prop_name = prop_name + things_of[token.text]
+                    if token.head.lemma_ != "long":
+                        print("Property: " + prop_name + " of- Long Adverbial modifier (advmod)")
+                        prop_name = prop_name + " of "
+
+            elif token.dep_ == "ROOT" or token.dep_ == "advcl":
+                if token.text == "born":
+                    prop_name = prop_name + "birth"
+                elif token.lemma_ == "die":
+                    prop_name = prop_name + "death"
+                elif token.lemma_ == "come":
+                    prop_name = prop_name + "origin"
+                print("Property: -" + prop_name + "- ROOT or adverbial clause modifier (advcl). It's birth, death or origin")
+
+            elif token.tag_ in nountags:
+                # If P is in the token tag, then its token text is an entity
+                if not "P" in token.tag_:  # MOET DIT NIET OMGEKEERD ZIJN if "P" not in???
+                    if prop_name in things_of.values():
+                        prop_name = prop_name + " of " + token.lemma_
+                        print("Property: -" + prop_name + "- P is not in token tag. In things_of found")
+                    elif token.dep_ != "pobj":
+                        # If 'S' is in the token tag, then it's probably plural (NNS or NNPS). Therefore use token text.
+                        if (token.text == "members") or not ("S" in token.tag_):
+                            prop_name = prop_name + token.text
+                            print("Property: -" + prop_name + "- Not object of a preposition (pobj). No 'S' in token tag")
+                        else:
+                            prop_name = prop_name + token.lemma_
+                            print("Property: -" + prop_name + "- Object of a preposition (pobj)")
+                    else:
+                        ent_name = ent_name + token.text + " "
+                        print("Entity: -" + ent_name + "- P is not in token tag and prop is not in things_of.")
                 else:
+                    # Adds every entity in the phrase together
                     ent_name = ent_name + token.text + " "
-                    print("Entity: -" + ent_name + "- P is not in token tag and prop is not in things_of.")
-            else:
-                # Adds every entity in the phrase together
-                ent_name = ent_name + token.text + " "
-                print("Entity: -" + ent_name + "- P is in token tag")
-    # If slow find found a property and an entity, Try to print an answer
-    if not prop_name == "" and not ent_name == "":
-        prop_tag = find_tag(prop_name, PROPERTY, FIRST_TRY)
-        ent_tag = find_tag(ent_name, ENTITY, FIRST_TRY)
-        found_result = print_answer(prop_tag, ent_tag, is_count)
-        print("   QUICK FIND FOUND entity: -" + ent_tag + " " + ent_name + "- and property: -" + prop_tag + " " + prop_name + "-")
-        # If it didn't find anything, then try disambiguating result
-        if not found_result:
-            print("DISAMBIGUATION phase quick find")
-            found_result = try_disambiguation(prop_name, ent_name, is_count, found_result)
-        if found_result:
-            global quick_find
-            quick_find += 1
-            print("Quick find count = " + str(quick_find))
+                    print("Entity: -" + ent_name + "- P is in token tag")
+        # If slow find found a property and an entity, Try to print an answer
+        if not prop_name == "" and not ent_name == "":
+            prop_tag = find_tag(prop_name, PROPERTY, FIRST_TRY)
+            ent_tag = find_tag(ent_name, ENTITY, FIRST_TRY)
+            found_result = print_answer(prop_tag, ent_tag, is_count)
+            print("   QUICK FIND FOUND entity: -" + ent_tag + " " + ent_name + "- and property: -" + prop_tag + " " + prop_name + "-")
+            # If it didn't find anything, then try disambiguating result
+            if not found_result:
+                print("DISAMBIGUATION phase quick find")
+                found_result = try_disambiguation(prop_name, ent_name, is_count, found_result)
+            if found_result:
+                global quick_find
+                quick_find += 1
+                print("Quick find count = " + str(quick_find))
 
     # the following can be combined with 145-179!!!
     '''SLOW FIND'''
     if not found_result:
         print("---> GOING TO SLOW FIND")
-        '''Look for entitiy'''
-        for ent_name in parse.ents:  # Try to find the entity with the entity method first
-            entity_name = ent_name.lemma_
-            entity_tag = find_tag(entity_name, ENTITY, FIRST_TRY)
-            print('Found slow entity in parse.ents. Entity_tag: -' + str(entity_name) + '- entity: -' + str(
-                entity_tag) + "-")
-
-        if entity_name == 'None':  # If no entity was found use the proper noun or object method to find entity
-            for ent_name in parse:
-                if ent_name.pos_ == 'PROPN' or ent_name.dep_ == 'pobj':
-                    entity_name = ent_name.lemma_
-                    entity_tag = find_tag(entity_name, ENTITY, FIRST_TRY)
-                    print('Found slow entity as proper noun or pobj. Query_ent: -' + str(
-                        entity_name) + '- entity: -' + str(entity_tag) + "-")
         '''Look for property'''
         for prop_name in parse:
             # Uses the word 'many' to indicate counting (maybe also use 'number of' or 'amount of'?)
@@ -338,7 +381,8 @@ def create_and_fire_query(line):
         else:
             global slow_find
             slow_find += 1
-            print("SLOW FIND FOUND entity: -" + entity_name + " " + entity_tag + "- and property: -" + property_tag + " " +  property_name + "-")
+            if not is_yes_no:
+                print("SLOW FIND FOUND entity: -" + entity_name + " " + entity_tag + "- and property: -" + property_tag + " " +  property_name + "-")
             print("Slow find count = " + str(slow_find))
 
 
@@ -349,7 +393,7 @@ def main(argv):
     quick_find = 0
     slow_find = 0
     not_found = 0
-    print_example_queries()
+    # print_example_queries()
     for line in sys.stdin:
         # line = example_queries[int(line)-1].rstrip()
         line = line.rstrip()
