@@ -92,29 +92,31 @@ error_msg = "No data found. Try paraphrasing the question (e.g. Prince becomes T
 user_msg = "Please enter a question or quit program by pressing control-D."
 
 
+'''This function print the examples above and runs the search for answers on them one line at a time '''
 def print_example_queries():
     for index, example in enumerate(example_queries):
         print("(" + str(index + 1) + ") " + example)
         create_and_fire_query(example)
+    # Op dit moment vindt quick find 24 and slow find 11 antwoorden
+    print("quick finds = " + str(quick_find) + " slow finds = " + str(slow_find) + " not founds = " + str(not_found))
     print(user_msg)
-    print("quick find = " + str(quick_find) + " slow find = " + str(slow_find) + " not_found = " + str(not_found))
-    # Op dit moment vindt quick find 20 and slow find 13 antwoorden
 
 
+'''This function print the answers based on their found property and entity tags'''
 def print_answer(property, entity, is_count):
     date = False
     # Is the property a birth date, death, disappeared, inception, abolished, publication, first performance  ?
     if (property == 'P569') | (property == 'P570') | (property == 'P571') | (property == 'P576') | \
             (property == 'P577') | (property == 'P1191'):
         date = True
-
+    # If it's a count, try count query
     if is_count:
         query = '''
         SELECT distinct (count(?albums) AS ?number) WHERE {
             wd:%s wdt:%s ?albums .
         } ''' % (entity, property)
-        # if is count didn't yield anything try implementing something that tries without count (string of guitar case)
-    else:
+        # IMPLEMENT SOMETHING THAT ALSO TRIES THE COUNT WITH A STANDARD QUERY (for string of guitar case)
+    else:  # standard query
         query = '''
         SELECT ?property WHERE { 
             wd:%s wdt:%s ?prop.
@@ -126,6 +128,7 @@ def print_answer(property, entity, is_count):
 
     data = requests.get(sparql_url,
                         params={'query': query, 'format': 'json'}).json()
+    # If no answer is found return empty
     if len(data['results']['bindings']) == EMPTY:
         return EMPTY
     for item in data['results']['bindings']:
@@ -145,47 +148,56 @@ def print_answer(property, entity, is_count):
     return True
 
 
-# This function tries different entity property disambiguations
-def try_disambiguation(query_property, query_entity, is_count, found_result):
+''' This function tries different entity and property disambiguations. It then also tries to find 
+    an answer with each of these disambiguated combinations'''
+def try_disambiguation(property_name, entity_name, is_count, found_result):
     index_entities = 0
-    entity = reduce_ambiguity(query_entity, ENTITY, index_entities)
+    entity_tag = find_tag(entity_name, ENTITY, index_entities)
     while not found_result and index_entities < 2:  # look through 2 different entities
         index_properties = 0
         while not found_result and index_properties < 7:  # look though 7 different properties
-            property = reduce_ambiguity(query_property, PROPERTY, index_properties)
-            if property == "empty":
+            property_tag = find_tag(property_name, PROPERTY, index_properties)
+            # If no more results can be found by ambiguation stop the loop
+            if property_tag == "empty":
                 break
-            found_result = print_answer(property, entity, is_count)
+            found_result = print_answer(property_tag, entity_tag, is_count)
             index_properties += 1
         index_entities += 1
-        entity = reduce_ambiguity(query_entity, ENTITY, index_entities)
-        if entity == "empty":
+        entity_tag = find_tag(entity_name, ENTITY, index_entities)
+        if entity_tag == "empty":
             break
     return found_result
 
 
+''' Find a property or entity tag from the WikiData API given the current property/entity name
+    The index indicates which tag in the API's list of tags needs to be returned'''
+def find_tag(name, ent_or_prop, index):
+    if ent_or_prop == ENTITY:  # Currently looking for the most referenced entity
+        params = {'action': 'wbsearchentities', 'language': 'en', 'format': 'json'}
+    if ent_or_prop == PROPERTY:  # Currently looking for the most referenced property
+        params = {'action': 'wbsearchentities', 'language': 'en', 'format': 'json', 'type': 'property'}
+    params['search'] = name
+    json = requests.get(wiki_api_url, params).json()
+    for iteration, result in enumerate(json['search'], start=0):
+        if index == FIRST_TRY:  # return only the first result, since that is the most referenced one
+            return result['id']
+        if iteration == index:  # if the first result didn't give an answer when the query fired
+            return result['id']
+    return "empty"  # at the end of the API list, return empty so no redundant empty statements are evaluated
+
+
+'''This function first looks for entity names in the line, then  '''
 def create_and_fire_query(line):
     nlp = spacy.load('en')
     parse = nlp(line.strip())
-    entity_tag = 'None'
     entity_name = 'None'
+    entity_tag = 'None'
     found_result = False
     is_count = False
-    for ent_name in parse.ents:  # Try to find the entity with the entity method first
-        entity_tag = ent_name.lemma_
-        entity_name = reduce_ambiguity(entity_tag, ENTITY, FIRST_TRY)
-        print('Found slow entity in parse.ents. Entity_tag: -' + str(entity_tag) + '- entity: -' + str(entity_name) + "-")
-
-    if entity_tag == 'None':
-        for ent_name in parse:  # If no entity was found use the proper noun or object method to find entity
-            if ent_name.pos_ == 'PROPN' or ent_name.dep_ == 'pobj':
-                entity_tag = ent_name.lemma_
-                entity_name = reduce_ambiguity(entity_tag, ENTITY, FIRST_TRY)
-                print('Found slow entity as proper noun or pobj. Query_ent: -' + str(entity_tag) + '- entity: -' + str(entity_name) + "-")
 
     ent_name = ""
     prop_name = ""
-
+    '''QUICK FIND'''
     for token in parse:
         if token.pos_ == "ADJ":
             if "st" in token.text:
@@ -218,7 +230,7 @@ def create_and_fire_query(line):
             if not "P" in token.tag_:  # MOET DIT NIET OMGEKEERD ZIJN if "P" not in???
                 if prop_name in things_of.values():
                     prop_name = prop_name + " of " + token.lemma_
-                    print("Property: -" + prop_name + "- P is not in token tag. things_of found")
+                    print("Property: -" + prop_name + "- P is not in token tag. In things_of found")
                 elif token.dep_ != "pobj":
                     # If 'S' is in the token tag, then it's probably plural (NNS or NNPS). Therefore use token text.
                     if (token.text == "members") or not ("S" in token.tag_):
@@ -234,25 +246,42 @@ def create_and_fire_query(line):
                 # Adds every entity in the phrase together
                 ent_name = ent_name + token.text + " "
                 print("Entity: -" + ent_name + "- P is in token tag")
-    # If slow find found a property and an entity, try to print an answer
+    # If slow find found a property and an entity, Try to print an answer
     if not prop_name == "" and not ent_name == "":
-        prop_tag = reduce_ambiguity(prop_name, PROPERTY, FIRST_TRY)
-        ent_tag = reduce_ambiguity(ent_name, ENTITY, FIRST_TRY)
+        prop_tag = find_tag(prop_name, PROPERTY, FIRST_TRY)
+        ent_tag = find_tag(ent_name, ENTITY, FIRST_TRY)
         found_result = print_answer(prop_tag, ent_tag, is_count)
         print("   QUICK FIND FOUND entity: -" + ent_tag + " " + ent_name + "- and property: -" + prop_tag + " " + prop_name + "-")
-        ## Dit toegevoegd om ook quick find meerdere properties en entities te laten vinden
+        # If it didn't find anything, then try disambiguating result
         if not found_result:
-            print("DISAMBIGUATION phase slow find")
+            print("DISAMBIGUATION phase quick find")
             found_result = try_disambiguation(prop_name, ent_name, is_count, found_result)
         if found_result:
             global quick_find
             quick_find += 1
-            print("quick_find = " + str(quick_find))
+            print("Quick find count = " + str(quick_find))
+
     # the following can be combined with 145-179!!!
+    '''SLOW FIND'''
     if not found_result:
         print("---> GOING TO SLOW FIND")
+        '''Look for entitiy'''
+        for ent_name in parse.ents:  # Try to find the entity with the entity method first
+            entity_name = ent_name.lemma_
+            entity_tag = find_tag(entity_name, ENTITY, FIRST_TRY)
+            print('Found slow entity in parse.ents. Entity_tag: -' + str(entity_name) + '- entity: -' + str(
+                entity_tag) + "-")
+
+        if entity_name == 'None':  # If no entity was found use the proper noun or object method to find entity
+            for ent_name in parse:
+                if ent_name.pos_ == 'PROPN' or ent_name.dep_ == 'pobj':
+                    entity_name = ent_name.lemma_
+                    entity_tag = find_tag(entity_name, ENTITY, FIRST_TRY)
+                    print('Found slow entity as proper noun or pobj. Query_ent: -' + str(
+                        entity_name) + '- entity: -' + str(entity_tag) + "-")
+        '''Look for property'''
         for prop_name in parse:
-            # Uses the word 'many' to indicate counting (maybe also use 'number of'?)
+            # Uses the word 'many' to indicate counting (maybe also use 'number of' or 'amount of'?)
             if prop_name.pos_ == 'ADJ' and prop_name.lemma_ == 'many':
                 print("Seeing this as a COUNT question")
                 is_count = True
@@ -262,44 +291,46 @@ def create_and_fire_query(line):
                     (prop_name.pos_ == 'ADJ' and prop_name.dep_ == 'amod'):
                 # Dit verandert naar prop.text ipv prop,lemma_ omdat je het volledige bijv naamwoord wilt (e.g. highest note)
                 property_name = " ".join((prop_name.text, prop_name.head.lemma_))
-                property_tag = reduce_ambiguity(property_name, PROPERTY, FIRST_TRY)
+                property_tag = find_tag(property_name, PROPERTY, FIRST_TRY)
                 print("Trying property: -" + property_name + "-, as compound or as adjectival modifier (amod)")
-                found_result = print_answer(property_tag, entity_name, is_count)
+                found_result = print_answer(property_tag, entity_tag, is_count)
                 if not found_result:
-                    found_result = try_disambiguation(property_name, entity_tag, is_count, found_result)
+                    found_result = try_disambiguation(property_name, entity_name, is_count, found_result)
             # This fires (mostly) for NOUNS (some entities as well if the not condition is omitted)
             if prop_name.dep_ != 'compound' and (prop_name.dep_ == 'nsubj' or prop_name.dep_ == 'attr' or prop_name.tag_ == 'NN') and \
-                    not found_result and entity_tag != prop_name.lemma_:
+                    not found_result and entity_name != prop_name.lemma_:
                 property_name = prop_name.lemma_
                 if ('member' or 'members') in property_name:  # Change member(s) in 'part of' since that is how it is referenced in WikiData
                     property_name = 'has part'
 
-                property_tag = reduce_ambiguity(property_name, PROPERTY, FIRST_TRY)
+                property_tag = find_tag(property_name, PROPERTY, FIRST_TRY)
                 print("Trying property: -" + property_name + "-, as nominal subject (nsubj), attribute (attr) or common noun (NN)")
-                found_result = print_answer(property_tag, entity_name, is_count)
+                found_result = print_answer(property_tag, entity_tag, is_count)
                 if not found_result:
-                    found_result = try_disambiguation(property_name, entity_tag, is_count, found_result)
+                    found_result = try_disambiguation(property_name, entity_name, is_count, found_result)
 
             if prop_name.dep_ == 'acl' or prop_name.dep_ == 'dobj' and not found_result:  # The dobj is mainly for count questions
                 property_name = prop_name.text
-                property_tag = reduce_ambiguity(property_name, PROPERTY, FIRST_TRY)
+                property_tag = find_tag(property_name, PROPERTY, FIRST_TRY)
                 if ('member' or 'members') in property_name:  # change member in 'has part' of since that is how it is referenced in WikiData
                     property_name = 'has part'
 
                 print("Trying property: -" + property_name + "-, as a clausal modifier of noun (acl) or direct object (dobj)")
-                found_result = print_answer(property_tag, entity_name, is_count)
+                found_result = print_answer(property_tag, entity_tag, is_count)
                 if not found_result:
-                    found_result = try_disambiguation(property_name, entity_tag, is_count, found_result)
+                    found_result = try_disambiguation(property_name, entity_name, is_count, found_result)
 
             if prop_name.dep_ == 'ROOT' and not found_result:
                 property_name = prop_name.head.lemma_
                 # If the root is 'to be' don't look up property (irrelevant to do, and erroneous results)
                 if not property_name == 'be':
-                    property_tag = reduce_ambiguity(property_name, PROPERTY, FIRST_TRY)
+                    property_tag = find_tag(property_name, PROPERTY, FIRST_TRY)
                     print("Trying property: -" + property_name + "-, as root (a word that means something)")
-                    found_result = print_answer(property_tag, entity_name, is_count)
+                    found_result = print_answer(property_tag, entity_tag, is_count)
                     if not found_result:
-                        found_result = try_disambiguation(property_name, entity_tag, is_count, found_result)
+                        found_result = try_disambiguation(property_name, entity_name, is_count, found_result)
+
+        '''Print how the program did'''
         if not found_result and line:  # and line means the line is not empty
             print(error_msg)
             global not_found
@@ -307,31 +338,16 @@ def create_and_fire_query(line):
         else:
             global slow_find
             slow_find += 1
-            print("SLOW FIND FOUND entity: -" + entity_tag + " " + entity_name + "- and property: -" + property_tag + " " +  property_name + "-")
-            print("slow_find = " + str(slow_find))
-
-
-def reduce_ambiguity(value, ent_prop, index):
-    if ent_prop == ENTITY:  # currently looking for the most referenced entity
-        params = {'action': 'wbsearchentities', 'language': 'en', 'format': 'json'}
-    if ent_prop == PROPERTY:  # currently looking for the most referenced property
-        params = {'action': 'wbsearchentities', 'language': 'en', 'format': 'json', 'type': 'property'}
-    params['search'] = value
-    json = requests.get(wiki_api_url, params).json()
-    for iteration, result in enumerate(json['search'], start=0):
-        if index == FIRST_TRY:  # return only the first result, since that is the most referenced one
-            return result['id']
-        if iteration == index:  # if the first result didn't give an answer
-            return result['id']
-    return "empty"  # at the end of the ambiguation list, return empty so no redundant empty statements are evaluated
+            print("SLOW FIND FOUND entity: -" + entity_name + " " + entity_tag + "- and property: -" + property_tag + " " +  property_name + "-")
+            print("Slow find count = " + str(slow_find))
 
 
 def main(argv):
     global quick_find
-    quick_find = 0
     global slow_find
-    slow_find = 0
     global not_found
+    quick_find = 0
+    slow_find = 0
     not_found = 0
     print_example_queries()
     for line in sys.stdin:
