@@ -208,12 +208,10 @@ def create_and_fire_query(line):
     found_result = False
     is_count = False
     is_yes_no = False
-    ent_name = ""
-    prop_name = ""
 
     '''YES/NO QUESTIONS'''
     # If the first word is a form of to be or to do it is a Yes/No question
-    if parse: # if parse is not null
+    if parse:  # if parse is not null
         if parse[0].lemma_ == 'do' or parse[0].lemma_ == 'be':
             print("This is a YES/NO question")
             is_yes_no = True
@@ -228,6 +226,7 @@ def create_and_fire_query(line):
             print('Found slow entity in parse.ents. Entity_tag: -' + str(entity_name) + '- entity: -' + str(
                 entity_tag) + "-")
             i += 1
+        # Try finding a second standard entity here
         else:
             entity_name2 = ent_name.lemma_
             entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY)
@@ -255,6 +254,9 @@ def create_and_fire_query(line):
 
     if not found_result:
         '''QUICK FIND'''
+        ent_name = ""
+        prop_name = ""
+
         for token in parse:
             if token.pos_ == "ADJ":
                 if "st" in token.text:
@@ -393,7 +395,7 @@ def main(argv):
     quick_find = 0
     slow_find = 0
     not_found = 0
-    # print_example_queries()
+    print_example_queries()
     for line in sys.stdin:
         # line = example_queries[int(line)-1].rstrip()
         line = line.rstrip()
