@@ -437,7 +437,6 @@ def create_and_fire_query(line):
                         "SLOW FIND FOUND entity: -" + entity_name + " " + entity_tag + "- and property: -" + property_tag + " " + property_name + "-")
             print("Slow find count = " + str(slow_find))
 
-
 def main(argv):
     global quick_find
     global slow_find
