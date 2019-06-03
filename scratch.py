@@ -37,7 +37,7 @@ import sys
 # What is the gender of Sting
 
 nlp = spacy.load('en')
-result = nlp("Is Michael Jackson male?")
+result = nlp("In what city was Eminem born?")
 for w in result:
     print("{} {} {}".format(w.lemma_, w.dep_, w.head.lemma_))
 for w in result:
@@ -63,4 +63,5 @@ for q in sys.stdin :
     parse = nlp(q.strip())
     for token in parse:
         print("\t".join((token.text, token.lemma_, token.pos_, token.tag_, token.dep_, token.head.lemma_)))
-
+    for ent in parse.ents:
+        print(ent.lemma_, ent.label_)
