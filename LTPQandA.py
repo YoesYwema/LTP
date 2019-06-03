@@ -234,13 +234,16 @@ def create_and_fire_query(line):
             entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY)
             print('Found slow entity2 in parse.ents. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(
                 entity_tag2) + "-")
+            found_result = yes_no_query(entity_tag, entity_tag2)
 
-    if is_yes_no:
+    if is_yes_no and not found_result:
         for ent_name2 in parse:
-            if ent_name2.pos_ == 'PROPN' and ent_name2.dep_ == 'compound':
+            if (ent_name2.pos_ == 'PROPN' and ent_name2.dep_ == 'compound'):
                 entity_name2 = " ".join((ent_name2.lemma_, ent_name2.head.lemma_))
+                if entity_name == entity_name2:
+                    break
                 entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY)
-                print('Found slow entity in parse.ents. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(
+                print('Found slow entity3 in parse.ents. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(
                     entity_tag2) + "-")
                 break
         if entity_tag2 != 'None':  # if entity 2 is not empty
@@ -396,7 +399,7 @@ def main(argv):
     quick_find = 0
     slow_find = 0
     not_found = 0
-    print_example_queries()
+    # print_example_queries()
     for line in sys.stdin:
         # line = example_queries[int(line)-1].rstrip()
         line = line.rstrip()
