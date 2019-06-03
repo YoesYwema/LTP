@@ -7,58 +7,143 @@ url = 'https://query.wikidata.org/sparql'
 params = {'action':'wbsearchentities','language':'en','format':'json'}
 paramsprop = {'action':'wbsearchentities','language':'en','format':'json', 'type':'property'}
 
-oldexamples = ["Who were the husbands of Yoko Ono?", "What is the birthdate of Jimi Hendrix?",
-			"what were the pseudonyms of David Bowie", "What is the date of death of Prince?",
-			"what is the number of children of Adele", "what were the causes of death of Michael Jackson?",
-			"what is the birthname of Lady Gaga?", "what are the genres of the White Stripes?",
-			"What is the highest note of a piano?", "Who were the members of The Beatles"]
-			
-newexamples = ["Who were the husbands of Yoko Ono?", "When was Jimi Hendrix born?",
-			"which were the pseudonyms of David Bowie", "When did Prince die?",
-			"How many children does Adele have?", "How did Michael Jackson die?",
-			"what is Lady Gaga's birth name?", "what are the genres of The White Stripes?",
-			"What is the highest note of a piano?", "Who were the members of The Beatles"]
+examples = [
+	#What-questions
+	"What was the cause of death of Mozart?",
+	"What were the causes of death of Michael Jackson?",
+    "What is the gender of Conchita Wurst?",
+    "What is the highest note of a piano?", #defined
+    "What is the record label of The Clash",
+    "What is the real name of Eminem?", #real name ipv birth name, werkt dat? 
+    "What is the website of Mumford and Sons?", #Mumford & Sons?
+    "What is the birth date of Elvis Presley?",
+    
+    #Who-questions
+    "Who was the composer of The Four Seasons?",
+    "Who was the father of Michael Jackson?",
+    "Who is the stepparent of Neneh Cherry",
+    
+    #Qualified statement questions
+    "Who are the members of Metallica?",
+    "Who is the wife of John Mayer?", #niet heel qualified, feel free to add
+    
+    #List questions
+    "Name the record labels of John Mayer.",
+	"Name the partners of Bruce Springsteen.",
+	"what are the genres of the White Stripes?",
+	"Who were in Queen?",
+	"Who were the members of The Beatles",
+	"Who are the children of Phill Collins?",
+	"which were the pseudonyms of David Bowie",
+	
+    #Rewritten What-questions
+    "Where is the birthplace of Bob Marley?",
+    "Where was the origin of Coldplay?",
+    "When is the deathdate of John Lennon?",
+    "When was Jimi Hendrix born?",
+    "When did Prince die?",
+    "How did Michael Jackson die?", #meerdere oorzaken
+    "How did Tupac Shakur die?", #een oorzaak
+    "what is Lady Gaga's birth name?", 
+    "Which country is Queen from?",
+    "How long is Bohemian Rhapsody?"
+    "In what city was Die Antwoord formed?",
+    "What year was the song ’1999’ by Prince published?",
+    "For what genre are music duo The Upbeats best known?",
+    "What does EDM stand for?", #definition
+    "What is a kazoo?",	#definition
+    
+    #count questions
+    "How many members does Nirvana have?",
+    "How many children does Adele have?", #defined
+    #feel free to add
+    
+    #yes/no questions
+    "Did Prince die?", #ent+prop
+    "Did Michael Jackson play in a band?", #ent + prop (?)
+    "Do The Fals make indie rock?", #2x entity (?)
+    "Is Michael Jackson male?", #2x entity
+    "Is Miley Cyrus the daughter of Billy Ray Cyrus?", #2x entity
+    "Does deadmau5 make house music?", #2x entity
+    ]
+    
 
-moreexamples = ["Where was Mozart born?", "How long is Bohemian Rhapsody?"]
-
-'''With these examples, my program finds the correct property and entity, 
-but there is no information on that property of that entity on Wikidata, 
-or the property does not exist. In the future I could upgrade my program
-to get the length of or first entity in a list of spouses/children/etc, 
-and subtract the year of birth from the year of death.'''
-noinfoexamples = ["How many husbands did Yoko Ono have?", "How old was Ella Fitzgerald when she died? ", 
-				"Who was the first wife of John Lennon?", "Who was the oldest child of Mozart?"]
+#questions to test extra things on
+''', "How old was Ella Fitzgerald when she died?",
+"How old is Eminem?", #also qualified
+"What is the age of Eminem", #also qualified
+"Who was the first husband of Yoko Ono?"
+"Who was Mozarts oldest child?",
+"To which musical genre(s) can The White Stripes be assigned?"'''
 
 errormsg = "no data found. Try paraphrasing the question (e.g. Prince becomes TAFKAP)."
 qprint = "Please enter a question or quit program by pressing control-D."
 
 print("Hello! Here are ten example questions.")
 
-for index, example in enumerate(newexamples):
+for index, example in enumerate(examples):
 	print("("+str(index+1)+") "+example)
 print("As you can see, punctuation is optional. Please use whitespaces and type names with capitals, though.")
 print(qprint)
 
-def findAnswer(bestent, bestprop):
-	'''Weirdquery is a query, e.g. a date, number, or name. The label of the answer is not needed, nor is it present.
-	A listquery is a query for a list of e.g. band members.'''
-	query="SELECT ?answerLabel WHERE { wd:"+bestent['id']+" wdt:"+bestprop['id']+" ?answer. ?answer rdfs:label ?answerLabel. FILTER(LANG(?answerLabel)='en') }"
-	weirdquery="SELECT ?date WHERE { wd:"+bestent['id']+" wdt:"+bestprop['id']+" ?date. }"
-	listquery="SELECT DISTINCT ?answerLabel WHERE {wd:"+bestent['id']+" p:P527 ?statement. ?statement ps:P527 ?answer. ?answer rdfs:label ?answerLabel. FILTER(LANG(?answerLabel)='en') }"
-	
-	#check if answer is text or numeric. If it is a "weirdquery" or "listquery", use the respective appropriate queries.
-	data = requests.get(url,params={'query': query, 'format': 'json'}).json()
-	if not data['results']['bindings']:
-		weirddata = requests.get(url,params={'query': weirdquery, 'format': 'json'}).json()
-		if not weirddata['results']['bindings']:
-			listdata = requests.get(url,params={'query': listquery, 'format': 'json'}).json()
-			return listdata
+def printAnswer(data):
+	#Print the answer(s)
+	print("Answer:", end = " ")
+	if 'boolean' in data:
+		if data['boolean']:
+			print("Yes.")
 		else:
-			return weirddata
+			print("No.")
 	else:
-		return data
+		answerCount = len(data['results']['bindings'])
+		for item in data['results']['bindings']:
+			for var in item:
+				'''Filter out dates from datetime strings; check for both colons and hyphens to ensure it's not 
+				a term/name with a hyphen (e.g. Jean-Luc, post-punk) or some non-datetime string with a colon.'''
+				if (item[var]['value'].find(':')>=0) and (item[var]['value'].find('-')>=0):
+					date = datetime.strptime(item[var]['value'], '%Y-%m-%dT%H:%M:%SZ')
+					print(date.day, date.strftime("%B"), date.year, end = "")
+				else:
+					print(item[var]['value'], end = "")
+					#Duration of a song should be in seconds. 
+					if (prop == "duration"):
+						print(" seconds", end = "")
+				answerCount=answerCount-1
+				if answerCount>0:
+					print(",", end = " ")
+				else:
+					print(" ")
+
+def chooseQuery(entity, entity2, property):
+	''' Choose between "regular", list, number-of(count), yes/no, or qualified-statement'''
+	#regular: when the answer is an entity
+	query = "SELECT ?answerLabel WHERE { wd:%s wdt:%s ?answer. ?answer rdfs:label ?answerLabel. FILTER(LANG(?answerLabel)='en') }" % (entity, property)
+	
+	#regular: when the answer is not an entity (name/date/defined-number-of)
+	query = "SELECT ?answer WHERE { wd:%s wdt:%s ?answer. }" % (entity, property)
+	
+	#count (pas gebruiken als er geen number-of gedefinieerd is!)
+	query = "SELECT distinct (count(?albums) AS ?number) WHERE { wd:%s wdt:%s ?albums . }" % (entity, property)
+	
+	#list
+	query="SELECT DISTINCT ?answerLabel WHERE {wd:%s p:P527 ?statement. ?statement ps:P527 ?answer. ?answer rdfs:label ?answerLabel. FILTER(LANG(?answerLabel)='en') }" % (entity)
+	
+	#yes/no met ofwel ent+prop ofwel twee ents
+	#query = 
+	
+	#qualified statement
+	#query = 
+	
+	return query
+
+def findAnswer(bestent, bestprop):
+	data = requests.get(url,params={'query': chooseQuery(bestent, bestent, bestprop), 'format': 'json'}).json()
+	if not data['results']['bindings']:
+		print("HELP")
+		return "empty"
+	return data
 		
-for line in sys.stdin:
+for line in examples:
 	nountags = ["NN", "NNS", "NNP", "NNPS"]
 	thingsOf = {"When":"date", "Where":"place", "many":"number", "long":"duration", "old":"age", "How":"cause"}
 	
@@ -92,7 +177,7 @@ for line in sys.stdin:
 				if (prop in thingsOf.values()):
 					prop = prop + " of " + token.lemma_
 				elif ((token.dep_ != "pobj")):
-					if (token.text == "members"):
+					if (token.text == "members") or not  ("S" in token.tag_):
 						prop = prop + token.text
 					else:
 						prop = prop + token.lemma_
@@ -123,30 +208,5 @@ for line in sys.stdin:
 		print(qprint)
 		continue;
 	
-	#Print the answer(s)
-	print("Answer:", end = " ")
-	if 'boolean' in data:
-		if data['boolean']:
-			print("Yes.")
-		else:
-			print("No.")
-	else:
-		answerCount = len(data['results']['bindings'])
-		for item in data['results']['bindings']:
-			for var in item:
-				'''Filter out dates from datetime strings; check for both colons and hyphens to ensure it's not 
-				a term/name with a hyphen (e.g. Jean-Luc, post-punk) or some non-datetime string with a colon.'''
-				if (item[var]['value'].find(':')>=0) and (item[var]['value'].find('-')>=0):
-					date = datetime.strptime(item[var]['value'], '%Y-%m-%dT%H:%M:%SZ')
-					print(date.day, date.strftime("%B"), date.year, end = "")
-				else:
-					print(item[var]['value'], end = "")
-					#Duration of a song should be in seconds. 
-					if (prop == "duration"):
-						print(" seconds", end = "")
-				answerCount=answerCount-1
-				if answerCount>0:
-					print(",", end = " ")
-				else:
-					print(" ")
+	printAnswer(data)
 	print(qprint)

@@ -37,7 +37,7 @@ import sys
 # What is the gender of Sting
 
 nlp = spacy.load('en')
-result = nlp("What was the cause of death of Michael Jackson?")
+result = nlp("Is Miley Cyrus the daughter of Billy Ray Cyrus?")
 for w in result:
     print("{} {} {}".format(w.lemma_, w.dep_, w.head.lemma_))
 for w in result:
@@ -55,7 +55,6 @@ for w in result:
 for token in result:
     print("\t".join((token.text, token.lemma_, token.pos_, token.tag_, token.dep_, token.head.lemma_)))
     if token.dep_ == 'compound' and token.tag_ == 'NN':
-        print('hi')
         property = " ".join((token.lemma_, token.head.lemma_))
         print(property)
 
@@ -64,3 +63,4 @@ for q in sys.stdin :
     parse = nlp(q.strip())
     for token in parse:
         print("\t".join((token.text, token.lemma_, token.pos_, token.tag_, token.dep_, token.head.lemma_)))
+
