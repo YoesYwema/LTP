@@ -18,8 +18,9 @@ global slow_find
 global not_found
 
 nountags = ["NN", "NNS", "NNP", "NNPS"]
-things_of = {"When": "date", "Where": "place", "many": "number", "long": "duration", "old": "age", "How": "cause"}
+things_of = {"When": "date", "Where": "place", "many": "number", "long": "duration", "old":"age", "How": "cause"}
 replacements = {"city":"place", "real":"birth", "member":"has part", "members":"has part", "because":"cause"}
+dateprops = ['P569', 'P570', 'P571', 'P576', 'P577', 'P1191']
 
 example_queries = [
     # What-questions
@@ -28,7 +29,7 @@ example_queries = [
     "What is the gender of Conchita Wurst?",
     "What is the highest note of a piano?",  # defined
     "What is the record label of The Clash",
-    "What is the real name of Eminem?",  # real name ipv birth name, werkt dat? Miss try_disambiquation in quick find?
+    "What is the real name of Eminem?",
     "What is the website of Mumford and Sons?",  # Mumford & Sons?
     "What is the birth date of Elvis Presley?",
 
@@ -59,21 +60,33 @@ example_queries = [
     "How did Michael Jackson die?",  # meerdere oorzaken
     "How did Tupac Shakur die?",  # een oorzaak
     "what is Lady Gaga's birth name?",
-    "Which country is Queen from?",
-    "How long is Bohemian Rhapsody?",
-    "In what city was Die Antwoord formed?",
-    "What year was the song ’1999’ by Prince published?",  # prints 1999-01-01T00:00:00Z
+    "Which country is Queen from?", #nog steeds queen als in monarch
+    "What year was the song ’1999’ by Prince published?",  #Did prints 1999-01-01T00:00:00Z
     "For what genre are music duo The Upbeats best known?",
     "What does EDM stand for?",  # definition
     "What is a kazoo?",  # definition
+    "How long is Bohemian Rhapsody?", #werkt, maar wel alleen met vraagteken!!!
+    "How old is The Dark Side Of The Moon?", #works
+    "How long is The Dark Side Of The Moon?", #doesn't work, wel gedefinieerd op wikidata tho
+
+    #in what city/country/place/year/band
+    "In what city was Die Antwoord formed?", #geeft alleen land!
+    "In what city was Eminem born", #werkt
+    "In what year was Die Antwoord formed?", #geeft 1 January
+    "In what year did Prince die", #geeft 1 January
 
     # count questions
     "How many members does Nirvana have?",
     "How many children does Adele have?",  # defined
     # feel free to add
 
+    #age questions (eerste drie werken)
+    "How old was Ella Fitzgerald when she died?",
+    "How old is Eminem?", #also qualified
+    "What is the age of Eminem", #also qualified
+
     # yes/no questions
-    "Did Prince die?",  # PROPN + VERB ROOT USe is death
+    "Did Prince die?",  # PROPN + VERB ROOT USe is death    #geeft verkeerde antwoord!
     "Did Michael Jackson play in the Jackson 5?",
     "Did Michael Jackson play in a band?"  # PROPN + NOUN pobj (DOESNT WORK SINCE BAND IS THE MEMBER OF PROPERTY)
     "Do The Fals make indie rock?",  # NOUN nsubj + NN amod (" ".join((ent_name2.lemma_, ent_name2.head.lemma_))) THE FALS ARE NOT EASILY FOUND IN WIKIDATA (LIKE THE 100th ENTITY)
@@ -87,10 +100,7 @@ example_queries = [
 ]
 
 # questions to test extra things on
-''', "How old was Ella Fitzgerald when she died?",
-"How old is Eminem?", #also qualified
-"What is the age of Eminem", #also qualified
-"Who was the first husband of Yoko Ono?"
+'''"Who was the first husband of Yoko Ono?",
 "Who was Mozarts oldest child?",
 "To which musical genre(s) can The White Stripes be assigned?"'''
 
@@ -98,7 +108,6 @@ error_msg = "No data found. Try paraphrasing the question (e.g. Prince becomes T
 user_msg = "Please enter a question or quit program by pressing control-D."
 
 '''This function print the examples above and runs the search for answers on them one line at a time '''
-
 
 def print_example_queries():
     for index, example in enumerate(example_queries):
@@ -108,14 +117,60 @@ def print_example_queries():
     print("quick finds = " + str(quick_find) + " slow finds = " + str(slow_find) + " not founds = " + str(not_found))
     print(user_msg)
 
+def find_age(entity, date_begin):
+    death = False
+    query = '''
+                    SELECT ?property WHERE { 
+                        wd:%s wdt:%s ?prop.
+                        SERVICE wikibase:label {
+                            bd:serviceParam wikibase:language "en".
+                            ?prop rdfs:label ?property
+                        }
+                    }''' % (entity, "P570")
+    dod = requests.get(sparql_url,
+                       params={'query': query, 'format': 'json'}).json()
+
+    for item in dod['results']['bindings']:
+        for var in item:
+            date_end = datetime.strptime(item[var]['value'], '%Y-%m-%dT%H:%M:%SZ')
+
+            yearOfDeath = int(str(date_end.strftime("%Y")), 10)
+            monthOfDeath = int(str(date_end.strftime("%m")), 10)
+            dateOfDeath = int(str(date_end.strftime("%d")), 10)
+            death = True
+
+    yearOfBirth = int(str(date_begin.strftime("%Y")), 10)
+    monthOfBirth = int(str(date_begin.strftime("%m")), 10)
+    dateOfBirth = int(str(date_begin.strftime("%d")), 10)
+
+    print("   ANSWER: ", end='')
+    if not death:
+        dot = datetime.today()
+        yearToday = int(str(dot.strftime("%Y")), 10)
+        monthToday = int(str(dot.strftime("%m")), 10)
+        dateToday = int(str(dot.strftime("%d")), 10)
+        year = yearToday - yearOfBirth
+        if (monthToday < monthOfBirth):
+            year = year - 1
+        if (monthToday == monthOfBirth):
+            if (dateToday < dateOfBirth):
+                year = year + 1
+
+    else:
+        print("This person died at ", end='')
+        year = yearOfDeath - yearOfBirth
+        if (monthOfDeath < monthOfBirth):
+            year = year - 1
+        if (monthOfDeath == monthOfBirth):
+            if (dateOfDeath < dateOfBirth):
+                year = year + 1
+    print(str(year) + " years old")
 
 '''This function print the answers based on their found property and entity tags'''
 def print_answer(property, entity, is_count, is_age):
-
     date = False
     # Is the property a birth date, death, disappeared, inception, abolished, publication, first performance  ?
-    if (property == 'P569') | (property == 'P570') | (property == 'P571') | (property == 'P576') | \
-            (property == 'P577') | (property == 'P1191'):
+    if property in dateprops:
         date = True
     # If it's a count, try count query
     if is_count:
@@ -138,89 +193,26 @@ def print_answer(property, entity, is_count, is_age):
     data = requests.get(sparql_url,
              params={'query': query, 'format': 'json'}).json()
 
-    if is_age:
-        death = False
-        query = '''
-                SELECT ?property WHERE { 
-                    wd:%s wdt:%s ?prop.
-                    SERVICE wikibase:label {
-                        bd:serviceParam wikibase:language "en".
-                        ?prop rdfs:label ?property
-                    }
-                }''' % (entity, "P570")
-        dod = requests.get(sparql_url,
-                 params={'query': query, 'format': 'json'}).json()
-
-        query = '''
-                SELECT ?property WHERE { 
-                    wd:%s wdt:%s ?prop.
-                    SERVICE wikibase:label {
-                        bd:serviceParam wikibase:language "en".
-                        ?prop rdfs:label ?property
-                    }
-                }''' % (entity, "P569")
-
-        dob = requests.get(sparql_url,
-             params={'query': query, 'format': 'json'}).json()
-
-        for item in dod['results']['bindings']:
-            for var in item:
-                date = datetime.strptime(item[var]['value'], '%Y-%m-%dT%H:%M:%SZ')
-
-                yearOfDeath = int(str(date.strftime("%Y")),10)
-                monthOfDeath = int(str(date.strftime("%m")),10)
-                dateOfDeath = int(str(date.strftime("%d")),10)
-                death = True
-
-        for item in dob['results']['bindings']:
-            for var in item:
-                date = datetime.strptime(item[var]['value'], '%Y-%m-%dT%H:%M:%SZ')
-
-                yearOfBirth = int(str(date.strftime("%Y")),10)
-                monthOfBirth = int(str(date.strftime("%m")),10)
-                dateOfBirth = int(str(date.strftime("%d")),10)
-
-        if not death:
-            print("not dead")
-            dot = date.today()
-            print(dot)
-            yearToday = int(str(dot.strftime("%Y")),10)
-            monthToday = int(str(dot.strftime("%m")),10)
-            dateToday = int(str(dot.strftime("%d")),10)
-            year = yearToday - yearOfBirth
-            if (monthToday < monthOfBirth):
-                year = year - 1
-            if (monthToday == monthOfBirth):
-                if (dateToday < dateOfBirth):
-                    year = year + 1
-
-        else:
-            year = yearOfDeath-yearOfBirth
-            if(monthOfDeath< monthOfBirth):
-                year=year-1
-            if(monthOfDeath==monthOfBirth):
-                if(dateOfDeath < dateOfBirth):
-                    year=year+1
-        print("   ANSWER: " + str(year) )
-
-
     # If no answer is found return empty
     if len(data['results']['bindings']) == EMPTY:
         return EMPTY
     for item in data['results']['bindings']:
         for var in item:
-            ## Dit werkt nog niet omdat het query_property zou moeten zijn (i.e. de volledige naam)
-            # if property == "duration":
-            #     print(" seconds", end="")
-            if date:
-                date = datetime.strptime(item[var]['value'], '%Y-%m-%dT%H:%M:%SZ')
-                print("   ANSWER: " + str(date.day), str(date.strftime("%B")), str(date.year))
-            if not date:
-                # Only print counts higher than 0 (else it didn't find one and the list is empty)
-                if is_count and item[var]['value'] == '0':
-                    return False
-
-                print("   ANSWER: " + item[var]['value'])
+            #Duration
+            if property == 'P2047':
+                print("   ANSWER: " + item[var]['value'] + " seconds")
+            else:
+                if date:
+                    date = datetime.strptime(item[var]['value'], '%Y-%m-%dT%H:%M:%SZ')
+                    if is_age:
+                        find_age(entity, date)
+                    else:
+                        print("   ANSWER: " + str(date.day), str(date.strftime("%B")), str(date.year))
+                if not date:
+                    # Only print counts higher than 0 (else it didn't find one and the list is empty)
+                    if is_count and item[var]['value'] == '0':
+                        return False
+                    print("   ANSWER: " + item[var]['value'])
     return True
 
 '''This function replaces a word if it should be (real/city/member'''
@@ -233,15 +225,13 @@ def replace(word):
 
 ''' This function tries different entity and property disambiguations. It then also tries to find 
     an answer with each of these disambiguated combinations'''
-
-
-def try_disambiguation(property_name, entity_name, is_count, found_result):
+def try_disambiguation(property_name, entity_name, is_count, found_result, is_age):
     index_entities = 0
-    entity_tag = find_tag(entity_name, ENTITY, index_entities)
+    entity_tag = find_tag(entity_name, ENTITY, index_entities,is_age,'')
     while not found_result and index_entities < 2:  # look through 2 different entities
         index_properties = 0
         while not found_result and index_properties < 7:  # look though 7 different properties
-            property_tag = find_tag(property_name, PROPERTY, index_properties)
+            property_tag = find_tag(property_name, PROPERTY, index_properties, is_age, entity_tag)
             print("Tag disamb: " + property_tag)
             # If no more results can be found by ambiguation stop the loop
             if property_tag == "empty":
@@ -249,21 +239,44 @@ def try_disambiguation(property_name, entity_name, is_count, found_result):
             found_result = print_answer(property_tag, entity_tag, is_count, False)
             index_properties += 1
         index_entities += 1
-        entity_tag = find_tag(entity_name, ENTITY, index_entities)
+        entity_tag = find_tag(entity_name, ENTITY, index_entities,is_age,'')
         if entity_tag == "empty":
             break
     return found_result
 
+'''Find the type of entity: a human or something else'''
+def instance_of(ent_tag):
+    query = '''
+        SELECT ?instance WHERE {
+            wd:%s wdt:P31 ?class.
+            SERVICE wikibase:label {
+                bd:serviceParam wikibase:language "en".
+                ?class rdfs:label ?instance
+            }
+        }''' % (ent_tag)
+
+    instdata = requests.get(sparql_url, params={'query': query, 'format': 'json'}).json()
+    name = 'date of publication'
+    for item in instdata['results']['bindings']:
+        for var in item:
+            if item[var]['value'] == "human":
+                name = 'date of birth'
+            elif item[var]['value'] == "band":
+                name = 'inception'
+            else:
+                name = 'date of publication'
+    return name
 
 ''' Find a property or entity tag from the WikiData API given the current property/entity name
     The index indicates which tag in the API's list of tags needs to be returned'''
-
-
-def find_tag(name, ent_or_prop, index):
+def find_tag(name, ent_or_prop, index, is_age, ent_tag):
+    # print("hi! name = ",name)
     if ent_or_prop == ENTITY:  # Currently looking for the most referenced entity
         params = {'action': 'wbsearchentities', 'language': 'en', 'format': 'json'}
     if ent_or_prop == PROPERTY:  # Currently looking for the most referenced property
         params = {'action': 'wbsearchentities', 'language': 'en', 'format': 'json', 'type': 'property'}
+        if is_age:
+            name = instance_of(ent_tag)
     params['search'] = name
     json = requests.get(wiki_api_url, params).json()
     for iteration, result in enumerate(json['search'], start=0):
@@ -284,7 +297,7 @@ def yes_no_query(entity, entity2, entity_name2):
         print("    ANSWER: Yes")
     else:
         # Try the second best entity
-        entity2 = find_tag(entity_name2, ENTITY, 1)
+        entity2 = find_tag(entity_name2, ENTITY, 1, False, '')
         query = '''
                 ASK WHERE {wd:%s ?prop wd:%s}
                 ''' % (entity, entity2)
@@ -298,8 +311,6 @@ def yes_no_query(entity, entity2, entity_name2):
 
 
 '''This function first looks for entity names in the line, then  '''
-
-
 def create_and_fire_query(line):
     nlp = spacy.load('en')
     parse = nlp(line.strip())
@@ -321,7 +332,6 @@ def create_and_fire_query(line):
             
     for token in parse:
         if token.text == "age" or token.text == "old":
-            print("question in which is asked for the age")
             is_age = True
 
     '''Look for entity'''
@@ -330,14 +340,14 @@ def create_and_fire_query(line):
         if i == 0:
             if ent_name.label_ != 'LOC':
                 entity_name = ent_name.lemma_
-                entity_tag = find_tag(entity_name, ENTITY, FIRST_TRY)
+                entity_tag = find_tag(entity_name, ENTITY, FIRST_TRY, is_age, '')
                 print('Found slow entity in parse.ents. Entity_tag: -' + str(entity_name) + '- entity: -' + str(
                     entity_tag) + "-")
                 i += 1
         # Try finding a second standard entity here
         else:
             entity_name2 = ent_name.lemma_
-            entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY)
+            entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '')
             print('Found slow entity2 in parse.ents. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(
                 entity_tag2) + "-")
 
@@ -350,7 +360,7 @@ def create_and_fire_query(line):
             if ent_name.pos_ == 'PROPN' or ent_name.dep_ == 'pobj' or ent_name.dep_ == 'nsubj':
                 # IF compound !!!
                 entity_name = ent_name.lemma_
-                entity_tag = find_tag(entity_name, ENTITY, FIRST_TRY)
+                entity_tag = find_tag(entity_name, ENTITY, FIRST_TRY, is_age, '')
                 print('Found slow entity as proper noun or pobj. Query_ent: -' + str(
                     entity_name) + '- entity: -' + str(entity_tag) + "-")
 
@@ -361,7 +371,7 @@ def create_and_fire_query(line):
                 entity_name2 = " ".join((ent_name2.lemma_, ent_name2.head.lemma_))
                 if entity_name == entity_name2:
                     continue
-                entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY)
+                entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '')
                 print('Found slow entity3 in parse. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(
                     entity_tag2) + "-")
                 #if ent_name2.dep_ == 'amod' :  # If its an amod, the next word will be the last and a dobj (therefore this already found the last word of the sentence)
@@ -376,7 +386,7 @@ def create_and_fire_query(line):
                 entity_name2 = ent_name2.lemma_
                 if entity_name == entity_name2:
                     continue
-                entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY)
+                entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY,is_age,'')
                 print('Found slow entity4 in parse. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(
                     entity_tag2) + "-")
 
@@ -405,7 +415,7 @@ def create_and_fire_query(line):
                         print("Property: -" + prop_name + things_of[
                             token.text] + "- Token text of Adverbial modifier (advmod)")
                         prop_name = prop_name + things_of[token.text]
-                    if token.head.lemma_ != "long":
+                    if token.head.lemma_ != "long" and token.head.lemma_ != "old":
                         print("Property: " + prop_name + " of- Long Adverbial modifier (advmod)")
                         prop_name = prop_name + " of "
 
@@ -416,6 +426,8 @@ def create_and_fire_query(line):
                     prop_name = prop_name + "death"
                 elif token.lemma_ == "come":
                     prop_name = prop_name + "origin"
+                elif token.lemma_ == "formed":
+                    prop_name = prop_name + "formation"
                 print(
                         "Property: -" + prop_name + "- ROOT or adverbial clause modifier (advcl). It's birth, death or origin")
 
@@ -426,7 +438,6 @@ def create_and_fire_query(line):
                         prop_name = prop_name + " of " + token.lemma_
                         print("Property: -" + prop_name + "- P is not in token tag. In things_of found")
                     elif token.dep_ != "pobj":
-                        # If 'S' is in the token tag, then it's probably plural (NNS or NNPS). Therefore use token text.
                         prop_name = prop_name + replace(token.lemma_)
                     else:
                         ent_name = ent_name + token.text + " "
@@ -435,17 +446,21 @@ def create_and_fire_query(line):
                     # Adds every entity in the phrase together
                     ent_name = ent_name + token.text + " "
                     print("Entity: -" + ent_name + "- P is in token tag")
-        # If slow find found a property and an entity, Try to print an answer
-        if not prop_name == "" and not ent_name == "":
-            prop_tag = find_tag(prop_name, PROPERTY, FIRST_TRY)
-            ent_tag = find_tag(ent_name, ENTITY, FIRST_TRY)
+        # If quick find found a property and an entity, Try to print an answer
+        print(prop_name, "ent =", ent_name)
+        if prop_name != "":
+            if not ent_name:
+                ent_name = entity_name
+            print("now "+ prop_name, "ent =", ent_name)
+            ent_tag = find_tag(ent_name, ENTITY, FIRST_TRY, is_age, '')
+            prop_tag = find_tag(prop_name, PROPERTY, FIRST_TRY, is_age, ent_tag)
             found_result = print_answer(prop_tag, ent_tag, is_count, is_age)
             print("   QUICK FIND FOUND entity: -" + ent_tag + " " + ent_name + "- and property: -" + prop_tag + " " + prop_name + "-")
 
             # If it didn't find anything, then try disambiguating result
             if not found_result:
                 print("DISAMBIGUATION phase quick find")
-                found_result = try_disambiguation(prop_name, ent_name, is_count, found_result)
+                found_result = try_disambiguation(prop_name, ent_name, is_count, found_result, is_age)
             if found_result:
                 global quick_find
                 quick_find += 1
@@ -483,7 +498,8 @@ def create_and_fire_query(line):
                 if prop_name.dep_ == 'ROOT' and not found_result:
                     property_name = replace(prop_name.head.lemma_)
                     # If the root is 'to be' don't look up property (irrelevant to do, and erroneous results)
-                    print("Trying property: -" + property_name + "-, as root (a word that means something)")
+                    if not property_name == 'be':
+                        print("Trying property: -" + property_name + "-, as root (a word that means something)")
 
                 if property_name and not property_name == 'be':
                     property_tag, found_result = find_answer(property_name, entity_name, entity_tag, is_count, is_age)
@@ -506,10 +522,10 @@ def create_and_fire_query(line):
 
 
 def find_answer(property_name, entity_name, entity_tag, is_count, is_age):
-    property_tag = find_tag(property_name, PROPERTY, FIRST_TRY)
+    property_tag = find_tag(property_name, PROPERTY, FIRST_TRY, is_age, entity_tag)
     found_result = print_answer(property_tag, entity_tag, is_count, is_age)
     if not found_result:
-        found_result = try_disambiguation(property_name, entity_name, is_count, found_result)
+        found_result = try_disambiguation(property_name, entity_name, is_count, found_result, is_age)
     return property_tag, found_result
     # else:  # It's a yes/no question
     #     property_tag = find_tag(property_name, PROPERTY, FIRST_TRY)
@@ -530,7 +546,7 @@ def main(argv):
     quick_find = 0
     slow_find = 0
     not_found = 0
-    print_example_queries()
+    # print_example_queries()
     print(user_msg)
     for line in sys.stdin:
         # line = example_queries[int(line)-1].rstrip()
