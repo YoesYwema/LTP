@@ -325,7 +325,7 @@ def create_and_fire_query(line):
     if not found_result:
         print("---> GOING TO SLOW FIND")
         '''Look for property'''
-        for prop_name in parse:
+         for prop_name in parse:
             # Uses the word 'many' to indicate counting (maybe also use 'number of' or 'amount of'?)
             if prop_name.pos_ == 'ADJ' and prop_name.lemma_ == 'many':
                 print("Seeing this as a COUNT question")
