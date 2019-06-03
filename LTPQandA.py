@@ -109,9 +109,8 @@ def print_example_queries():
 
 
 '''This function print the answers based on their found property and entity tags'''
+def print_answer(property, entity, is_count, is_age):
 
-
-def print_answer(property, entity, is_count):
     date = False
     # Is the property a birth date, death, disappeared, inception, abolished, publication, first performance  ?
     if (property == 'P569') | (property == 'P570') | (property == 'P571') | (property == 'P576') | \
@@ -123,6 +122,7 @@ def print_answer(property, entity, is_count):
         SELECT distinct (count(?albums) AS ?number) WHERE {
             wd:%s wdt:%s ?albums .
         } ''' % (entity, property)
+
         # IMPLEMENT SOMETHING THAT ALSO TRIES THE COUNT WITH A STANDARD QUERY (for string of guitar case)
     else:  # standard query
         query = '''
@@ -135,7 +135,74 @@ def print_answer(property, entity, is_count):
         }''' % (entity, property)
 
     data = requests.get(sparql_url,
-                        params={'query': query, 'format': 'json'}).json()
+             params={'query': query, 'format': 'json'}).json()
+
+    if is_age:
+        death = False
+        query = '''
+                SELECT ?property WHERE { 
+                    wd:%s wdt:%s ?prop.
+                    SERVICE wikibase:label {
+                        bd:serviceParam wikibase:language "en".
+                        ?prop rdfs:label ?property
+                    }
+                }''' % (entity, "P570")
+        dod = requests.get(sparql_url,
+                 params={'query': query, 'format': 'json'}).json()
+
+        query = '''
+                SELECT ?property WHERE { 
+                    wd:%s wdt:%s ?prop.
+                    SERVICE wikibase:label {
+                        bd:serviceParam wikibase:language "en".
+                        ?prop rdfs:label ?property
+                    }
+                }''' % (entity, "P569")
+
+        dob = requests.get(sparql_url,
+             params={'query': query, 'format': 'json'}).json()
+
+        for item in dod['results']['bindings']:
+            for var in item:
+                date = datetime.strptime(item[var]['value'], '%Y-%m-%dT%H:%M:%SZ')
+
+                yearOfDeath = int(str(date.strftime("%Y")),10)
+                monthOfDeath = int(str(date.strftime("%m")),10)
+                dateOfDeath = int(str(date.strftime("%d")),10)
+                death = True
+
+        for item in dob['results']['bindings']:
+            for var in item:
+                date = datetime.strptime(item[var]['value'], '%Y-%m-%dT%H:%M:%SZ')
+
+                yearOfBirth = int(str(date.strftime("%Y")),10)
+                monthOfBirth = int(str(date.strftime("%m")),10)
+                dateOfBirth = int(str(date.strftime("%d")),10)
+
+        if not death:
+            print("not dead")
+            dot = date.today()
+            print(dot)
+            yearToday = int(str(dot.strftime("%Y")),10)
+            monthToday = int(str(dot.strftime("%m")),10)
+            dateToday = int(str(dot.strftime("%d")),10)
+            year = yearToday - yearOfBirth
+            if (monthToday < monthOfBirth):
+                year = year - 1
+            if (monthToday == monthOfBirth):
+                if (dateToday < dateOfBirth):
+                    year = year + 1
+
+        else:
+            year = yearOfDeath-yearOfBirth
+            if(monthOfDeath< monthOfBirth):
+                year=year-1
+            if(monthOfDeath==monthOfBirth):
+                if(dateOfDeath < dateOfBirth):
+                    year=year+1
+        print("   ANSWER: " + str(year) )
+
+
     # If no answer is found return empty
     if len(data['results']['bindings']) == EMPTY:
         return EMPTY
@@ -177,7 +244,7 @@ def try_disambiguation(property_name, entity_name, is_count, found_result):
             # If no more results can be found by ambiguation stop the loop
             if property_tag == "empty":
                 break
-            found_result = print_answer(property_tag, entity_tag, is_count)
+            found_result = print_answer(property_tag, entity_tag, is_count, False)
             index_properties += 1
         index_entities += 1
         entity_tag = find_tag(entity_name, ENTITY, index_entities)
@@ -238,6 +305,7 @@ def create_and_fire_query(line):
     entity_tag = 'None'
     found_result = False
     is_count = False
+    is_age = False
     is_yes_no = False
     superlative = False
 
@@ -248,6 +316,11 @@ def create_and_fire_query(line):
             print("This is a YES/NO question")
             is_yes_no = True
             entity_tag2 = 'None'
+            
+    for token in parse:
+        if token.text == "age" or "old":
+                print("question in which is asked for the age")
+                is_age = True
 
     '''Look for entity'''
     i = 0
@@ -265,6 +338,7 @@ def create_and_fire_query(line):
             entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY)
             print('Found slow entity2 in parse.ents. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(
                 entity_tag2) + "-")
+
             if is_yes_no:
                 found_result = yes_no_query(entity_tag, entity_tag2, entity_name2)
 
@@ -362,9 +436,9 @@ def create_and_fire_query(line):
         if not prop_name == "" and not ent_name == "":
             prop_tag = find_tag(prop_name, PROPERTY, FIRST_TRY)
             ent_tag = find_tag(ent_name, ENTITY, FIRST_TRY)
-            found_result = print_answer(prop_tag, ent_tag, is_count)
-            print(
-                    "   QUICK FIND FOUND entity: -" + ent_tag + " " + ent_name + "- and property: -" + prop_tag + " " + prop_name + "-")
+            found_result = print_answer(prop_tag, ent_tag, is_count, is_age)
+            print("   QUICK FIND FOUND entity: -" + ent_tag + " " + ent_name + "- and property: -" + prop_tag + " " + prop_name + "-")
+
             # If it didn't find anything, then try disambiguating result
             if not found_result:
                 print("DISAMBIGUATION phase quick find")
@@ -391,7 +465,7 @@ def create_and_fire_query(line):
                 property_name = " ".join((replace(prop_name.text), replace(prop_name.head.lemma_)))
                 property_tag = find_tag(property_name, PROPERTY, FIRST_TRY)
                 print("Trying property: -" + property_name + "-, as compound or as adjectival modifier (amod)")
-                found_result = print_answer(property_tag, entity_tag, is_count)
+                found_result = print_answer(property_tag, entity_tag, is_count, is_age)
                 if not found_result:
                     found_result = try_disambiguation(property_name, entity_name, is_count, found_result)
             # This fires (mostly) for NOUNS (some entities as well if the not condition is omitted)
@@ -400,9 +474,8 @@ def create_and_fire_query(line):
                     not found_result and entity_name != prop_name.lemma_:
                 property_name = replace(prop_name.lemma_)
                 property_tag = find_tag(property_name, PROPERTY, FIRST_TRY)
-                print(
-                        "Trying property: -" + property_name + "-, as nominal subject (nsubj), attribute (attr) or common noun (NN)")
-                found_result = print_answer(property_tag, entity_tag, is_count)
+                print("Trying property: -" + property_name + "-, as nominal subject (nsubj), attribute (attr) or common noun (NN)")
+                found_result = print_answer(property_tag, entity_tag, is_count,is_age)
                 if not found_result:
                     found_result = try_disambiguation(property_name, entity_name, is_count, found_result)
 
@@ -410,7 +483,7 @@ def create_and_fire_query(line):
                 property_name = replace(prop_name.text)
                 property_tag = find_tag(property_name, PROPERTY, FIRST_TRY)
                 print("Trying property: -" + property_name + "-, as a clausal modifier of noun (acl) or direct object (dobj)")
-                found_result = print_answer(property_tag, entity_tag, is_count)
+                found_result = print_answer(property_tag, entity_tag, is_count, is_age)
                 if not found_result:
                     found_result = try_disambiguation(property_name, entity_name, is_count, found_result)
 
@@ -420,7 +493,7 @@ def create_and_fire_query(line):
                 if not property_name == 'be':
                     property_tag = find_tag(property_name, PROPERTY, FIRST_TRY)
                     print("Trying property: -" + property_name + "-, as root (a word that means something)")
-                    found_result = print_answer(property_tag, entity_tag, is_count)
+                    found_result = print_answer(property_tag, entity_tag, is_count,is_age)
                     if not found_result:
                         found_result = try_disambiguation(property_name, entity_name, is_count, found_result)
 
