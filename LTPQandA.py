@@ -17,10 +17,10 @@ global quick_find
 global slow_find
 global not_found
 
-nountags = ["NN", "NNS", "NNP", "NNPS"]
-things_of = {"When": "date", "Where": "place", "many": "number", "long": "duration", "old":"age", "How": "cause"}
-replacements = {"city":"place", "real":"birth", "member":"has part", "members":"has part", "because":"cause"}
-dateprops = ['P569', 'P570', 'P571', 'P576', 'P577', 'P1191']
+noun_tags = ["NN", "NNS", "NNP", "NNPS"]
+things_of = {"When": "date", "Where": "place", "many": "number", "long": "duration", "old": "age", "How": "cause"}
+replacements = {"city": "place", "real": "birth", "member": "has part", "members": "has part", "because": "cause"}
+date_props = ['P569', 'P570', 'P571', 'P576', 'P577', 'P1191']
 
 example_queries = [
     # What-questions
@@ -60,37 +60,38 @@ example_queries = [
     "How did Michael Jackson die?",  # meerdere oorzaken
     "How did Tupac Shakur die?",  # een oorzaak
     "what is Lady Gaga's birth name?",
-    "Which country is Queen from?", #nog steeds queen als in monarch
-    "What year was the song ’1999’ by Prince published?",  #Did prints 1999-01-01T00:00:00Z
+    "Which country is Queen from?",  # nog steeds queen als in monarch
+    "What year was the song ’1999’ by Prince published?",  # Did prints 1999-01-01T00:00:00Z
     "For what genre are music duo The Upbeats best known?",
     "What does EDM stand for?",  # definition
     "What is a kazoo?",  # definition
-    "How long is Bohemian Rhapsody?", #werkt, maar wel alleen met vraagteken!!!
-    "How old is The Dark Side Of The Moon?", #works
-    "How long is The Dark Side Of The Moon?", #doesn't work, wel gedefinieerd op wikidata tho
+    "How long is Bohemian Rhapsody?",  # werkt, maar wel alleen met vraagteken!!!
+    "How old is The Dark Side Of The Moon?",  # works
+    "How long is The Dark Side Of The Moon?",  # doesn't work, wel gedefinieerd op wikidata tho
 
-    #in what city/country/place/year/band
-    "In what city was Die Antwoord formed?", #geeft alleen land!
-    "In what city was Eminem born", #werkt
-    "In what year was Die Antwoord formed?", #geeft 1 January
-    "In what year did Prince die", #geeft 1 January
+    # in what city/country/place/year/band
+    "In what city was Die Antwoord formed?",  # geeft alleen land!
+    "In what city was Eminem born",  # werkt
+    "In what year was Die Antwoord formed?",  # geeft 1 January
+    "In what year did Prince die",  # geeft 1 January
 
     # count questions
     "How many members does Nirvana have?",
     "How many children does Adele have?",  # defined
     # feel free to add
 
-    #age questions (eerste drie werken)
+    # age questions (eerste drie werken)
     "How old was Ella Fitzgerald when she died?",
-    "How old is Eminem?", #also qualified
-    "What is the age of Eminem", #also qualified
+    "How old is Eminem?",  # also qualified
+    "What is the age of Eminem",  # also qualified
 
     # yes/no questions
     "Did Prince die?",  # PROPN + VERB ROOT USe is death    #geeft verkeerde antwoord!
     "Did Michael Jackson play in the Jackson 5?",
     "Did Michael Jackson play in a band?"  # PROPN + NOUN pobj (DOESNT WORK SINCE BAND IS THE MEMBER OF PROPERTY)
-    "Do The Fals make indie rock?",  # NOUN nsubj + NN amod (" ".join((ent_name2.lemma_, ent_name2.head.lemma_))) THE FALS ARE NOT EASILY FOUND IN WIKIDATA (LIKE THE 100th ENTITY)
-    "Does GreenDay make alternative rock?"   # NOUN nsubj + NN amod
+    "Do The Fals make indie rock?",
+    # NOUN nsubj + NN amod (" ".join((ent_name2.lemma_, ent_name2.head.lemma_))) THE FALS ARE NOT EASILY FOUND IN WIKIDATA (LIKE THE 100th ENTITY)
+    "Does GreenDay make alternative rock?"  # NOUN nsubj + NN amod
     "Is Michael Jackson male?",  # PROPN + NN attr
     "Is Miley Cyrus the daughter of Billy Ray Cyrus?",  # PROPN + compound PROPN (only last word cyrus is pobj)
     "Does deadmau5 make house music?",  # NOUN + NOUN compound (" ".join((ent_name2.lemma_, ent_name2.head.lemma_)))
@@ -109,6 +110,7 @@ user_msg = "Please enter a question or quit program by pressing control-D."
 
 '''This function print the examples above and runs the search for answers on them one line at a time '''
 
+
 def print_example_queries():
     for index, example in enumerate(example_queries):
         print("(" + str(index + 1) + ") " + example)
@@ -117,60 +119,63 @@ def print_example_queries():
     print("quick finds = " + str(quick_find) + " slow finds = " + str(slow_find) + " not founds = " + str(not_found))
     print(user_msg)
 
+
 def find_age(entity, date_begin):
     death = False
     query = '''
-                    SELECT ?property WHERE { 
-                        wd:%s wdt:%s ?prop.
-                        SERVICE wikibase:label {
-                            bd:serviceParam wikibase:language "en".
-                            ?prop rdfs:label ?property
-                        }
-                    }''' % (entity, "P570")
-    dod = requests.get(sparql_url,
+            SELECT ?property WHERE { 
+                wd:%s wdt:%s ?prop.
+                SERVICE wikibase:label {
+                    bd:serviceParam wikibase:language "en".
+                    ?prop rdfs:label ?property
+                }
+            }''' % (entity, "P570")  # P570 = date of death
+    death_date = requests.get(sparql_url,
                        params={'query': query, 'format': 'json'}).json()
 
-    for item in dod['results']['bindings']:
+    for item in death_date['results']['bindings']:
         for var in item:
             date_end = datetime.strptime(item[var]['value'], '%Y-%m-%dT%H:%M:%SZ')
 
-            yearOfDeath = int(str(date_end.strftime("%Y")), 10)
-            monthOfDeath = int(str(date_end.strftime("%m")), 10)
-            dateOfDeath = int(str(date_end.strftime("%d")), 10)
+            year_of_death = int(str(date_end.strftime("%Y")), 10)
+            month_of_death = int(str(date_end.strftime("%m")), 10)
+            date_of_death = int(str(date_end.strftime("%d")), 10)
             death = True
 
-    yearOfBirth = int(str(date_begin.strftime("%Y")), 10)
-    monthOfBirth = int(str(date_begin.strftime("%m")), 10)
-    dateOfBirth = int(str(date_begin.strftime("%d")), 10)
+    year_of_birth = int(str(date_begin.strftime("%Y")), 10)
+    month_of_birth = int(str(date_begin.strftime("%m")), 10)
+    date_of_birth = int(str(date_begin.strftime("%d")), 10)
 
     print("   ANSWER: ", end='')
     if not death:
         dot = datetime.today()
-        yearToday = int(str(dot.strftime("%Y")), 10)
-        monthToday = int(str(dot.strftime("%m")), 10)
-        dateToday = int(str(dot.strftime("%d")), 10)
-        year = yearToday - yearOfBirth
-        if (monthToday < monthOfBirth):
+        year_today = int(str(dot.strftime("%Y")), 10)
+        month_today = int(str(dot.strftime("%m")), 10)
+        date_today = int(str(dot.strftime("%d")), 10)
+        year = year_today - year_of_birth
+        if month_today < month_of_birth:
             year = year - 1
-        if (monthToday == monthOfBirth):
-            if (dateToday < dateOfBirth):
+        if month_today == month_of_birth:
+            if date_today < date_of_birth:
                 year = year + 1
 
     else:
         print("This person died at ", end='')
-        year = yearOfDeath - yearOfBirth
-        if (monthOfDeath < monthOfBirth):
+        # Is this not going to give errors when there's no death date recorded?
+        year = year_of_death - year_of_birth
+        if month_of_death < month_of_birth:
             year = year - 1
-        if (monthOfDeath == monthOfBirth):
-            if (dateOfDeath < dateOfBirth):
+        if month_of_death == month_of_birth:
+            if date_of_death < date_of_birth:
                 year = year + 1
     print(str(year) + " years old")
+
 
 '''This function print the answers based on their found property and entity tags'''
 def print_answer(property, entity, is_count, is_age):
     date = False
     # Is the property a birth date, death, disappeared, inception, abolished, publication, first performance  ?
-    if property in dateprops:
+    if property in date_props:
         date = True
     # If it's a count, try count query
     if is_count:
@@ -191,15 +196,14 @@ def print_answer(property, entity, is_count, is_age):
         }''' % (entity, property)
 
     data = requests.get(sparql_url,
-             params={'query': query, 'format': 'json'}).json()
+                        params={'query': query, 'format': 'json'}).json()
 
     # If no answer is found return empty
     if len(data['results']['bindings']) == EMPTY:
         return EMPTY
     for item in data['results']['bindings']:
         for var in item:
-            #Duration
-            if property == 'P2047':
+            if property == 'P2047':  # = Duration
                 print("   ANSWER: " + item[var]['value'] + " seconds")
             else:
                 if date:
@@ -215,7 +219,8 @@ def print_answer(property, entity, is_count, is_age):
                     print("   ANSWER: " + item[var]['value'])
     return True
 
-'''This function replaces a word if it should be (real/city/member'''
+
+'''This function replaces a word if it should be (real/city/member) -> (birth/place/has part)'''
 def replace(word):
     if word in replacements:
         return replacements[word]
@@ -227,33 +232,34 @@ def replace(word):
     an answer with each of these disambiguated combinations'''
 def try_disambiguation(property_name, entity_name, is_count, found_result, is_age):
     index_entities = 0
-    entity_tag = find_tag(entity_name, ENTITY, index_entities,is_age,'')
+    entity_tag = find_tag(entity_name, ENTITY, index_entities, is_age, '')
     while not found_result and index_entities < 2:  # look through 2 different entities
         index_properties = 0
         while not found_result and index_properties < 7:  # look though 7 different properties
             property_tag = find_tag(property_name, PROPERTY, index_properties, is_age, entity_tag)
-            print("Tag disamb: " + property_tag)
+            print("Tag disambiguation: " + property_tag)
             # If no more results can be found by ambiguation stop the loop
             if property_tag == "empty":
                 break
             found_result = print_answer(property_tag, entity_tag, is_count, False)
             index_properties += 1
         index_entities += 1
-        entity_tag = find_tag(entity_name, ENTITY, index_entities,is_age,'')
+        entity_tag = find_tag(entity_name, ENTITY, index_entities, is_age, '')
         if entity_tag == "empty":
             break
     return found_result
 
+
 '''Find the type of entity: a human or something else'''
 def instance_of(ent_tag):
     query = '''
-        SELECT ?instance WHERE {
-            wd:%s wdt:P31 ?class.
-            SERVICE wikibase:label {
-                bd:serviceParam wikibase:language "en".
-                ?class rdfs:label ?instance
-            }
-        }''' % (ent_tag)
+            SELECT ?instance WHERE {
+                wd:%s wdt:P31 ?class.
+                SERVICE wikibase:label {
+                    bd:serviceParam wikibase:language "en".
+                    ?class rdfs:label ?instance
+                }
+            }''' % ent_tag
 
     instdata = requests.get(sparql_url, params={'query': query, 'format': 'json'}).json()
     name = 'date of publication'
@@ -266,6 +272,7 @@ def instance_of(ent_tag):
             else:
                 name = 'date of publication'
     return name
+
 
 ''' Find a property or entity tag from the WikiData API given the current property/entity name
     The index indicates which tag in the API's list of tags needs to be returned'''
@@ -310,7 +317,7 @@ def yes_no_query(entity, entity2, entity_name2):
     return True
 
 
-'''This function first looks for entity names in the line, then  '''
+'''This function first looks for entities and properties given the line'''
 def create_and_fire_query(line):
     nlp = spacy.load('en')
     parse = nlp(line.strip())
@@ -320,16 +327,16 @@ def create_and_fire_query(line):
     is_count = False
     is_age = False
     is_yes_no = False
-    superlative = False
+    superlative = False  # Why is this here???
 
     '''YES/NO QUESTIONS'''
     # If the first word is a form of to be or to do it is a Yes/No question
     if parse:  # if parse is not null
-        if parse[0].lemma_ == 'do' or parse[0].lemma_ == 'be':
+        if parse[0].lemma_ == 'do' or parse[0].lemma_ == 'be' or parse[0].lemma_ == 'have':
             print("This is a YES/NO question")
             is_yes_no = True
             entity_tag2 = 'None'
-            
+
     for token in parse:
         if token.text == "age" or token.text == "old":
             is_age = True
@@ -348,10 +355,9 @@ def create_and_fire_query(line):
         else:
             entity_name2 = ent_name.lemma_
             entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '')
-            print('Found slow entity2 in parse.ents. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(
-                entity_tag2) + "-")
-
+            print('Found slow entity2 in parse.ents. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(entity_tag2) + "-")
             if is_yes_no:
+                # answer_ent = find_property_answer(parse, entity_name2)
                 found_result = yes_no_query(entity_tag, entity_tag2, entity_name2)
 
     if entity_name == 'None':  # If no entity was found use the proper noun or object method to find entity
@@ -361,8 +367,7 @@ def create_and_fire_query(line):
                 # IF compound !!!
                 entity_name = ent_name.lemma_
                 entity_tag = find_tag(entity_name, ENTITY, FIRST_TRY, is_age, '')
-                print('Found slow entity as proper noun or pobj. Query_ent: -' + str(
-                    entity_name) + '- entity: -' + str(entity_tag) + "-")
+                print('Found slow entity as proper noun or pobj. Query_ent: -' + str(entity_name) + '- entity: -' + str(entity_tag) + "-")
 
     if is_yes_no and not found_result:
         # The loop always continues until the last word in the senetence, which is nice since English (yes/no) is structured according to Subject Verb Object, and we need object
@@ -372,21 +377,18 @@ def create_and_fire_query(line):
                 if entity_name == entity_name2:
                     continue
                 entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '')
-                print('Found slow entity3 in parse. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(
-                    entity_tag2) + "-")
-                #if ent_name2.dep_ == 'amod' :  # If its an amod, the next word will be the last and a dobj (therefore this already found the last word of the sentence)
-                    # found_result = yes_no_query(entity_tag, entity_tag2, entity_name2)
+                print('Found slow entity3 in parse. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(entity_tag2) + "-")
                 if entity_tag2 == 'empty':
                     continue
                 else:
                     break
-                #continue  # Irrelevant statement?
-            if ent_name2.dep_ == 'attr' or ent_name2.dep_ == 'npadvmod' or ent_name2.dep_ == 'dobj'\
+
+            if ent_name2.dep_ == 'attr' or ent_name2.dep_ == 'npadvmod' or ent_name2.dep_ == 'dobj' \
                     or ent_name2.dep_ == 'pobj' or ent_name2.dep_ == 'ROOT':
                 entity_name2 = ent_name2.lemma_
-                if entity_name == entity_name2:
+                if entity_name == entity_name2:  # If it found the same name find another one
                     continue
-                entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY,is_age,'')
+                entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '')
                 print('Found slow entity4 in parse. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(
                     entity_tag2) + "-")
 
@@ -428,10 +430,9 @@ def create_and_fire_query(line):
                     prop_name = prop_name + "origin"
                 elif token.lemma_ == "formed":
                     prop_name = prop_name + "formation"
-                print(
-                        "Property: -" + prop_name + "- ROOT or adverbial clause modifier (advcl). It's birth, death or origin")
+                print("Property: -" + prop_name + "- ROOT or adverbial clause modifier (advcl). It's birth, death or origin")
 
-            elif token.tag_ in nountags:
+            elif token.tag_ in noun_tags:
                 # If P is in the token tag, then its token text is an entity
                 if not "P" in token.tag_:
                     if prop_name in things_of.values():
@@ -451,12 +452,11 @@ def create_and_fire_query(line):
         if prop_name != "":
             if not ent_name:
                 ent_name = entity_name
-            print("now "+ prop_name, "ent =", ent_name)
+            print("now " + prop_name, "ent =", ent_name)
             ent_tag = find_tag(ent_name, ENTITY, FIRST_TRY, is_age, '')
             prop_tag = find_tag(prop_name, PROPERTY, FIRST_TRY, is_age, ent_tag)
             found_result = print_answer(prop_tag, ent_tag, is_count, is_age)
             print("   QUICK FIND FOUND entity: -" + ent_tag + " " + ent_name + "- and property: -" + prop_tag + " " + prop_name + "-")
-
             # If it didn't find anything, then try disambiguating result
             if not found_result:
                 print("DISAMBIGUATION phase quick find")
@@ -527,16 +527,91 @@ def find_answer(property_name, entity_name, entity_tag, is_count, is_age):
     if not found_result:
         found_result = try_disambiguation(property_name, entity_name, is_count, found_result, is_age)
     return property_tag, found_result
-    # else:  # It's a yes/no question
-    #     property_tag = find_tag(property_name, PROPERTY, FIRST_TRY)
-    #     found_same_answer = find_property_answer(property_tag, entity_tag, is_count, is_age, correct_prop_tag)
-    #     if found_same_answer:
-    #         print("    ANSWER: Yes")
-    #     else:
-    #         print("    ANSWER: No")
 
 
-# find_property_answer
+'''Deze functie is not niet getest! Het idee ervan is dat je voor plekken waar 
+   'found_result = yes_no_query(entity_tag, entity_tag2, entity_name2)' staat deze functie aanroept.
+   Het antwoord hiervan moet dat natuurlijk meegenomen worden in de yes_no_query() functie.
+   Deze functie evalueert nu of er een property in de zin staat (a.d.h.v. quick find) en queried de database dan of 
+   die met entity 1 en de gevonden property op een antwoord uitkomt dat hetzelfde is als entity 2'''
+# def find_property_answer(parse, entity_tag, entity_name2):
+#     prop_name = ''
+#
+#     for token in parse:
+#         if token.pos_ == "ADJ":
+#             if "st" in token.text:
+#                 print("Y/N ADJective property: -" + prop_name + token.text + "-")
+#                 prop_name = prop_name + token.text + " "
+#                 superlative = True
+#
+#         elif token.dep_ == "advmod":
+#             if token.text in things_of:
+#                 if token.head.lemma_ in things_of:
+#                     print("Y/N Property: -" + prop_name + things_of[
+#                         token.head.lemma_] + "- Token head lemma of Adverbial modifier (advmod)")
+#                     prop_name = prop_name + things_of[token.head.lemma_]
+#                 else:
+#                     print("Y/N Property: -" + prop_name + things_of[
+#                         token.text] + "- Token text of Adverbial modifier (advmod)")
+#                     prop_name = prop_name + things_of[token.text]
+#                 if token.head.lemma_ != "long" and token.head.lemma_ != "old":
+#                     print("Y/N Property: " + prop_name + " of- Long Adverbial modifier (advmod)")
+#                     prop_name = prop_name + " of "
+#
+#         elif token.dep_ == "ROOT" or token.dep_ == "advcl":
+#             if token.text == "born":
+#                 prop_name = prop_name + "birth"
+#             elif token.lemma_ == "die":
+#                 prop_name = prop_name + "death"
+#             elif token.lemma_ == "come":
+#                 prop_name = prop_name + "origin"
+#             elif token.lemma_ == "formed":
+#                 prop_name = prop_name + "formation"
+#             print("Y/N Property: -" + prop_name + "- ROOT or adverbial clause modifier (advcl). It's birth, death or origin")
+#
+#         elif token.tag_ in noun_tags:
+#             # If P is in the token tag, then its token text is an entity
+#             if not "P" in token.tag_:
+#                 if prop_name in things_of.values():
+#                     prop_name = prop_name + " of " + token.lemma_
+#                     print("Y/N Property: -" + prop_name + "- P is not in token tag. In things_of found")
+#                 elif token.dep_ != "pobj":
+#                     prop_name = prop_name + replace(token.lemma_)
+#         prop_tag = find_tag(prop_name, PROPERTY, FIRST_TRY, False, entity_tag)
+#         if prop_tag != 'empty':
+#             # If the entity name answer using a property is the same as the second entity in the question
+#             if entity_name2 == compare_answer(prop_tag, entity_tag, entity_name2):
+#                 return True
+#             else:
+#                 return False  # The entity and the answer don't correspond (e.g. asking if Billy is the Wife of Miley Cyrus)
+#
+#         else:  # Else property tag is empty, so we assume no property has been found
+#             return True  # return that the answer of the yes/no entity query should be respected
+#
+# #
+# def compare_answer(prop_tag, entity_tag, entity_name2):
+#         query = '''
+#          SELECT ?property WHERE {
+#              wd:%s wdt:%s ?prop.
+#              SERVICE wikibase:label {
+#                  bd:serviceParam wikibase:language "en".
+#                  ?prop rdfs:label ?property
+#              }
+#          }''' % (entity_tag, prop_tag)
+#
+#         data = requests.get(sparql_url,
+#                             params={'query': query, 'format': 'json'}).json()
+#
+#         # If no answer is found return empty
+#         if len(data['results']['bindings']) == EMPTY:
+#             return EMPTY
+#         for item in data['results']['bindings']:
+#             for var in item:
+#                 if item[var]['value'] == entity_name2:
+#                     return True
+#                 # Maybe this always evaluates to false??? due to it not being a string (surround with str()???
+#                 else:
+#                     return False
 
 
 def main(argv):
