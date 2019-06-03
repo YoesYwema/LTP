@@ -72,12 +72,16 @@ example_queries = [
     # feel free to add
 
     # yes/no questions
-    "Did Prince die?",  # ent+prop
-    "Did Michael Jackson play in a band?",  # ent + prop (?)
-    "Do The Fals make indie rock?",  # 2x entity (?)
-    "Is Michael Jackson male?",  # 2x entity
-    "Is Miley Cyrus the daughter of Billy Ray Cyrus?",  # 2x entity
-    "Does deadmau5 make house music?",  # 2x entity
+    "Did Prince die?",  # PROPN + VERB ROOT
+    "Did Michael Jackson play in a band?",  # PROPN + NOUN pobj (DOESNT WORK SINCE BAND IS THE MEMBER OF PROPERTY)
+    "Do The Fals make indie rock?",  # NOUN nsubj + NN amod (" ".join((ent_name2.lemma_, ent_name2.head.lemma_))) THE FALS ARE NOT EASILY FOUND IN WIKIDATA (LIKE THE 100th ENTITY)
+    "Does GreenDay make alternative rock?"   # NOUN nsubj + NN amod
+    "Is Michael Jackson male?",  # PROPN + NN attr
+    "Is Miley Cyrus the daughter of Billy Ray Cyrus?",  # PROPN + compound PROPN (only last word cyrus is pobj)
+    "Does deadmau5 make house music?",  # NOUN + NOUN compound (" ".join((ent_name2.lemma_, ent_name2.head.lemma_)))
+    "Does Felix Jaehn come from Hamburg?",  # PROPN + PROPN npadvmod
+    "Is deadmouse only a composer?",  # PROPN + NOUN attr  (IT ANSWERS CORRECTLY BUT DUNNO WHY HAHA)
+    "Did Louis Armstrong influence the Beatles?",  # PROPN + PROPN dobj
 ]
 
 # questions to test extra things on
@@ -186,7 +190,7 @@ def find_tag(name, ent_or_prop, index):
     return "empty"  # at the end of the API list, return empty so no redundant empty statements are evaluated
 
 
-def yes_no_query(entity, entity2):
+def yes_no_query(entity, entity2, entity_name2):
     query = '''
             ASK WHERE {wd:%s ?prop wd:%s}
             ''' % (entity, entity2)
@@ -195,7 +199,17 @@ def yes_no_query(entity, entity2):
     if data['boolean']:
         print("    ANSWER: Yes")
     else:
-        print("    ANSWER: No")
+        # Try the second best entity
+        entity2 = find_tag(entity_name2, ENTITY, 1)
+        query = '''
+                ASK WHERE {wd:%s ?prop wd:%s}
+                ''' % (entity, entity2)
+        data = requests.get(sparql_url,
+                            params={'query': query, 'format': 'json'}).json()
+        if data['boolean']:
+            print("    ANSWER: Yes")
+        else:
+            print("    ANSWER: No")
     return True
 
 
@@ -232,28 +246,46 @@ def create_and_fire_query(line):
             entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY)
             print('Found slow entity2 in parse.ents. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(
                 entity_tag2) + "-")
-            found_result = yes_no_query(entity_tag, entity_tag2)
-
-    if is_yes_no and not found_result:
-        for ent_name2 in parse:
-            if (ent_name2.pos_ == 'PROPN' and ent_name2.dep_ == 'compound'):
-                entity_name2 = " ".join((ent_name2.lemma_, ent_name2.head.lemma_))
-                if entity_name == entity_name2:
-                    break
-                entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY)
-                print('Found slow entity3 in parse.ents. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(
-                    entity_tag2) + "-")
-                break
-        if entity_tag2 != 'None':  # if entity 2 is not empty
-            found_result = yes_no_query(entity_tag, entity_tag2)
+            if is_yes_no:
+                found_result = yes_no_query(entity_tag, entity_tag2, entity_name2)
 
     if entity_name == 'None':  # If no entity was found use the proper noun or object method to find entity
         for ent_name in parse:
-            if ent_name.pos_ == 'PROPN' or ent_name.dep_ == 'pobj':
+            # Seems dangerous to look for pobj here because you're most often looking for the subject of the sentence?
+            if ent_name.pos_ == 'PROPN' or ent_name.dep_ == 'pobj' or ent_name.dep_ == 'nsubj':
+                # IF compound !!!
                 entity_name = ent_name.lemma_
                 entity_tag = find_tag(entity_name, ENTITY, FIRST_TRY)
                 print('Found slow entity as proper noun or pobj. Query_ent: -' + str(
                     entity_name) + '- entity: -' + str(entity_tag) + "-")
+
+    if is_yes_no and not found_result:
+        # The loop always continues until the last word in the senetence, which is nice since English (yes/no) is structured according to Subject Verb Object, and we need object
+        for ent_name2 in parse:
+            if ent_name2.dep_ == 'compound' or ent_name2.dep_ == 'amod':
+                entity_name2 = " ".join((ent_name2.lemma_, ent_name2.head.lemma_))
+                if entity_name == entity_name2:
+                    continue
+                entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY)
+                print('Found slow entity3 in parse. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(
+                    entity_tag2) + "-")
+                #if ent_name2.dep_ == 'amod' :  # If its an amod, the next word will be the last and a dobj (therefore this already found the last word of the sentence)
+                    # found_result = yes_no_query(entity_tag, entity_tag2, entity_name2)
+                if not entity_tag2:
+                    continue
+                else:
+                    break
+                #continue  # Irrelevant statement?
+            if ent_name2.dep_ == 'attr' or ent_name2.dep_ == 'npadvmod' or ent_name2.dep_ == 'dobj'\
+                    or ent_name2.dep_ == 'pobj' or ent_name2.dep_ == 'ROOT':
+                entity_name2 = ent_name2.lemma_
+                if entity_name == entity_name2:
+                    continue
+                entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY)
+                print('Found slow entity4 in parse. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(
+                    entity_tag2) + "-")
+        if entity_tag2 != 'None':  # if entity 2 is not empty
+            found_result = yes_no_query(entity_tag, entity_tag2, entity_name2)
 
     if not found_result:
         '''QUICK FIND'''
