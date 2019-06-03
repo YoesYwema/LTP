@@ -73,15 +73,16 @@ example_queries = [
     # feel free to add
 
     # yes/no questions
-    "Did Prince die?",  # PROPN + VERB ROOT
-    "Did Michael Jackson play in a band?",  # PROPN + NOUN pobj (DOESNT WORK SINCE BAND IS THE MEMBER OF PROPERTY)
+    "Did Prince die?",  # PROPN + VERB ROOT USe is death
+    "Did Michael Jackson play in the Jackson 5?",
+    "Did Michael Jackson play in a band?"  # PROPN + NOUN pobj (DOESNT WORK SINCE BAND IS THE MEMBER OF PROPERTY)
     "Do The Fals make indie rock?",  # NOUN nsubj + NN amod (" ".join((ent_name2.lemma_, ent_name2.head.lemma_))) THE FALS ARE NOT EASILY FOUND IN WIKIDATA (LIKE THE 100th ENTITY)
     "Does GreenDay make alternative rock?"   # NOUN nsubj + NN amod
     "Is Michael Jackson male?",  # PROPN + NN attr
     "Is Miley Cyrus the daughter of Billy Ray Cyrus?",  # PROPN + compound PROPN (only last word cyrus is pobj)
     "Does deadmau5 make house music?",  # NOUN + NOUN compound (" ".join((ent_name2.lemma_, ent_name2.head.lemma_)))
     "Does Felix Jaehn come from Hamburg?",  # PROPN + PROPN npadvmod
-    "Is deadmouse only a composer?",  # PROPN + NOUN attr  (IT ANSWERS CORRECTLY BUT DUNNO WHY HAHA)
+    "Is deadmau5 only a composer?",  # PROPN + NOUN attr  (IT ANSWERS CORRECTLY BUT DUNNO WHY HAHA)
     "Did Louis Armstrong influence the Beatles?",  # PROPN + PROPN dobj
 ]
 
@@ -241,6 +242,7 @@ def try_disambiguation(property_name, entity_name, is_count, found_result):
         index_properties = 0
         while not found_result and index_properties < 7:  # look though 7 different properties
             property_tag = find_tag(property_name, PROPERTY, index_properties)
+            print("Tag disamb: " + property_tag)
             # If no more results can be found by ambiguation stop the loop
             if property_tag == "empty":
                 break
@@ -318,9 +320,9 @@ def create_and_fire_query(line):
             entity_tag2 = 'None'
             
     for token in parse:
-        if token.text == "age" or "old":
-                print("question in which is asked for the age")
-                is_age = True
+        if token.text == "age" or token.text == "old":
+            print("question in which is asked for the age")
+            is_age = True
 
     '''Look for entity'''
     i = 0
@@ -364,7 +366,7 @@ def create_and_fire_query(line):
                     entity_tag2) + "-")
                 #if ent_name2.dep_ == 'amod' :  # If its an amod, the next word will be the last and a dobj (therefore this already found the last word of the sentence)
                     # found_result = yes_no_query(entity_tag, entity_tag2, entity_name2)
-                if not entity_tag2:
+                if entity_tag2 == 'empty':
                     continue
                 else:
                     break
@@ -377,6 +379,7 @@ def create_and_fire_query(line):
                 entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY)
                 print('Found slow entity4 in parse. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(
                     entity_tag2) + "-")
+
         if entity_tag2 != 'None':  # if entity 2 is not empty
             found_result = yes_no_query(entity_tag, entity_tag2, entity_name2)
 
@@ -452,6 +455,7 @@ def create_and_fire_query(line):
     if not found_result:
         print("---> GOING TO SLOW FIND")
         '''Look for property'''
+        property_name = ""
         for prop_name in parse:
             # Uses the word 'many' to indicate counting (maybe also use 'number of' or 'amount of'?)
             if prop_name.pos_ == 'ADJ' and prop_name.lemma_ == 'many':
@@ -459,43 +463,33 @@ def create_and_fire_query(line):
                 is_count = True
 
             # If the property consists of multiple words join them together
-            if not found_result and (prop_name.dep_ == 'compound' and prop_name.tag_ == 'NN') or \
-                    (prop_name.pos_ == 'ADJ' and prop_name.dep_ == 'amod'):
-                # Dit verandert naar prop.text ipv prop,lemma_ omdat je het volledige bijv naamwoord wilt (e.g. highest note)
-                property_name = " ".join((replace(prop_name.text), replace(prop_name.head.lemma_)))
-                property_tag = find_tag(property_name, PROPERTY, FIRST_TRY)
-                print("Trying property: -" + property_name + "-, as compound or as adjectival modifier (amod)")
-                found_result = print_answer(property_tag, entity_tag, is_count, is_age)
-                if not found_result:
-                    found_result = try_disambiguation(property_name, entity_name, is_count, found_result)
-            # This fires (mostly) for NOUNS (some entities as well if the not condition is omitted)
-            if prop_name.dep_ != 'compound' and (
-                    prop_name.dep_ == 'nsubj' or prop_name.dep_ == 'attr' or prop_name.tag_ == 'NN') and \
-                    not found_result and entity_name != prop_name.lemma_:
-                property_name = replace(prop_name.lemma_)
-                property_tag = find_tag(property_name, PROPERTY, FIRST_TRY)
-                print("Trying property: -" + property_name + "-, as nominal subject (nsubj), attribute (attr) or common noun (NN)")
-                found_result = print_answer(property_tag, entity_tag, is_count,is_age)
-                if not found_result:
-                    found_result = try_disambiguation(property_name, entity_name, is_count, found_result)
+            if not found_result:
+                if (prop_name.dep_ == 'compound' and prop_name.tag_ == 'NN') or \
+                        (prop_name.pos_ == 'ADJ' and prop_name.dep_ == 'amod'):
+                    # Dit verandert naar prop.text ipv prop,lemma_ omdat je het volledige bijv naamwoord wilt (e.g. highest note)
+                    property_name = " ".join((replace(prop_name.text), replace(prop_name.head.lemma_)))
+                    print("Trying property: -" + property_name + "-, as compound or as adjectival modifier (amod)")
+                # This fires (mostly) for NOUNS (some entities as well if the not condition is omitted)
+                if prop_name.dep_ != 'compound' and (
+                        prop_name.dep_ == 'nsubj' or prop_name.dep_ == 'attr' or prop_name.tag_ == 'NN') and \
+                        not found_result and entity_name != prop_name.lemma_:
+                    property_name = replace(prop_name.lemma_)
+                    print("Trying property: -" + property_name + "-, as nominal subject (nsubj), attribute (attr) or common noun (NN)")
 
-            if prop_name.dep_ == 'acl' or prop_name.dep_ == 'dobj' and not found_result:  # The dobj is mainly for count questions
-                property_name = replace(prop_name.text)
-                property_tag = find_tag(property_name, PROPERTY, FIRST_TRY)
-                print("Trying property: -" + property_name + "-, as a clausal modifier of noun (acl) or direct object (dobj)")
-                found_result = print_answer(property_tag, entity_tag, is_count, is_age)
-                if not found_result:
-                    found_result = try_disambiguation(property_name, entity_name, is_count, found_result)
+                if prop_name.dep_ == 'acl' or prop_name.dep_ == 'dobj' and not found_result:  # The dobj is mainly for count questions
+                    property_name = replace(prop_name.text)
+                    print("Trying property: -" + property_name + "-, as a clausal modifier of noun (acl) or direct object (dobj)")
 
-            if prop_name.dep_ == 'ROOT' and not found_result:
-                property_name = replace(prop_name.head.lemma_)
-                # If the root is 'to be' don't look up property (irrelevant to do, and erroneous results)
-                if not property_name == 'be':
-                    property_tag = find_tag(property_name, PROPERTY, FIRST_TRY)
+                if prop_name.dep_ == 'ROOT' and not found_result:
+                    property_name = replace(prop_name.head.lemma_)
+                    # If the root is 'to be' don't look up property (irrelevant to do, and erroneous results)
                     print("Trying property: -" + property_name + "-, as root (a word that means something)")
-                    found_result = print_answer(property_tag, entity_tag, is_count,is_age)
-                    if not found_result:
-                        found_result = try_disambiguation(property_name, entity_name, is_count, found_result)
+
+                if property_name and not property_name == 'be':
+                    property_tag, found_result = find_answer(property_name, entity_name, entity_tag, is_count, is_age)
+                    if not found_result:  # If you don't find a result don't try again with the same name
+                        property_name = ""
+                    print("Tag: " + property_tag)
 
         '''Print how the program did'''
         if not found_result and line:  # and line means the line is not empty
@@ -510,6 +504,25 @@ def create_and_fire_query(line):
                         "SLOW FIND FOUND entity: -" + entity_name + " " + entity_tag + "- and property: -" + property_tag + " " + property_name + "-")
             print("Slow find count = " + str(slow_find))
 
+
+def find_answer(property_name, entity_name, entity_tag, is_count, is_age):
+    property_tag = find_tag(property_name, PROPERTY, FIRST_TRY)
+    found_result = print_answer(property_tag, entity_tag, is_count, is_age)
+    if not found_result:
+        found_result = try_disambiguation(property_name, entity_name, is_count, found_result)
+    return property_tag, found_result
+    # else:  # It's a yes/no question
+    #     property_tag = find_tag(property_name, PROPERTY, FIRST_TRY)
+    #     found_same_answer = find_property_answer(property_tag, entity_tag, is_count, is_age, correct_prop_tag)
+    #     if found_same_answer:
+    #         print("    ANSWER: Yes")
+    #     else:
+    #         print("    ANSWER: No")
+
+
+# find_property_answer
+
+
 def main(argv):
     global quick_find
     global slow_find
@@ -517,7 +530,7 @@ def main(argv):
     quick_find = 0
     slow_find = 0
     not_found = 0
-    # print_example_queries()
+    print_example_queries()
     print(user_msg)
     for line in sys.stdin:
         # line = example_queries[int(line)-1].rstrip()
