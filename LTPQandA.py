@@ -19,7 +19,7 @@ global not_found
 
 nountags = ["NN", "NNS", "NNP", "NNPS"]
 things_of = {"When": "date", "Where": "place", "many": "number", "long": "duration", "old": "age", "How": "cause"}
-replacements = {"city":"place", "real":"birth", "member":"members", "members":"has part"}
+replacements = {"city":"place", "real":"birth", "member":"has part", "members":"has part", "because":"cause"}
 
 example_queries = [
     # What-questions
@@ -350,12 +350,7 @@ def create_and_fire_query(line):
                         print("Property: -" + prop_name + "- P is not in token tag. In things_of found")
                     elif token.dep_ != "pobj":
                         # If 'S' is in the token tag, then it's probably plural (NNS or NNPS). Therefore use token text.
-                        if not ("S" in token.tag_):
-                            prop_name = prop_name + replace(token.text)
-                            print("Property: -" + prop_name + "- Not object of a preposition (pobj). Single")
-                        else:
-                            prop_name = prop_name + replace(token.lemma_)
-                            print("Property: -" + prop_name + "- Not object of a preposition (pobj). Plural")
+                        prop_name = prop_name + replace(token.lemma_)
                     else:
                         ent_name = ent_name + token.text + " "
                         print("Entity: -" + ent_name + "- P is not in token tag and prop is not in things_of.")
@@ -414,8 +409,7 @@ def create_and_fire_query(line):
             if prop_name.dep_ == 'acl' or prop_name.dep_ == 'dobj' and not found_result:  # The dobj is mainly for count questions
                 property_name = replace(prop_name.text)
                 property_tag = find_tag(property_name, PROPERTY, FIRST_TRY)
-                print(
-                        "Trying property: -" + property_name + "-, as a clausal modifier of noun (acl) or direct object (dobj)")
+                print("Trying property: -" + property_name + "-, as a clausal modifier of noun (acl) or direct object (dobj)")
                 found_result = print_answer(property_tag, entity_tag, is_count)
                 if not found_result:
                     found_result = try_disambiguation(property_name, entity_name, is_count, found_result)
