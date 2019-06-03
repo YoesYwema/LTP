@@ -37,7 +37,7 @@ import sys
 # What is the gender of Sting
 
 nlp = spacy.load('en')
-result = nlp("Is Miley Cyrus the daughter of Billy Ray Cyrus?")
+result = nlp("Is Michael Jackson male?")
 for w in result:
     print("{} {} {}".format(w.lemma_, w.dep_, w.head.lemma_))
 for w in result:
