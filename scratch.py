@@ -37,7 +37,7 @@ import sys
 # What is the gender of Sting
 
 nlp = spacy.load('en')
-result = nlp("Is Michael Jackson male?")
+result = nlp("Is michael jackson born on 29-08-1958?")
 for w in result:
     print("{} {} {}".format(w.lemma_, w.dep_, w.head.lemma_))
 for w in result:
@@ -45,6 +45,7 @@ for w in result:
 for w in result:
     print(w.text, w.ent_type_, w.ent_iob_)
 for ent in result.ents:
+    print("hi")
     print(ent.lemma_, ent.label_)
 for w in result:
     if w.dep_ == "nsubj":
