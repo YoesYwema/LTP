@@ -71,8 +71,8 @@ def print_answer(property, entity, is_count):
         } ''' % (entity, property)
         # if is count didn't yield anything try implementing something that tries without count (string of guitar case)
 
-    if is_two_entities:
-	query = '''ASK WHERE {wd:%s ?prop wd:%s}'''%(ent1,ent2)
+    #if is_two_entities:
+	#query = '''ASK WHERE {wd:%s ?prop wd:%s}'''%(ent1,ent2)
 	
     else:
         query = '''
@@ -131,14 +131,14 @@ def create_and_fire_query(line):
     for ent in parse.ents:  # Try to find the entity with the entity method first
         query_entity = ent.lemma_
         entity = reduce_ambiguity(query_entity, ENTITY, FIRST_TRY)
-        # print('query_ent: ' + str(query_entity) + ' entity: ' + str(entity))
+        print('query_ent: ' + str(query_entity) + ' entity: ' + str(entity))
 
     if query_entity == 'None':
         for ent in parse:  # If no entity was found use the proper noun or object method to find entity
             if ent.pos_ == 'PROPN' or ent.dep_ == 'pobj':
                 query_entity = ent.lemma_
                 entity = reduce_ambiguity(query_entity, ENTITY, FIRST_TRY)
-                # print('query_ent2: ' + str(query_entity) + ' entity2: ' + str(entity))
+                print('query_ent2: ' + str(query_entity) + ' entity2: ' + str(entity))
 
     ent = ""
     prop = ""
@@ -254,13 +254,6 @@ def reduce_ambiguity(value, ent_prop, index):
         if iteration == index:  # if the first result didn't give an answer
             return result['id']
     return "empty"  # at the end of the ambiguation list, return empty so no redundant empty statements are evaluated
-
-
-def two_entities(ent1,ent2):
-	
-
-	
-
 
 def main(argv):
     print_example_queries()
