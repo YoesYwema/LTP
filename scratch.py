@@ -37,7 +37,7 @@ import sys
 # What is the gender of Sting
 
 nlp = spacy.load('en')
-result = nlp("Is michael jackson born on 29-08-1958?")
+result = nlp("Is Amsterdam the capital of the Netherlands?")
 for w in result:
     print("{} {} {}".format(w.lemma_, w.dep_, w.head.lemma_))
 for w in result:

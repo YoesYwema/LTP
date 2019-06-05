@@ -357,8 +357,17 @@ def create_and_fire_query(line):
             entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '')
             print('Found slow entity2 in parse.ents. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(entity_tag2) + "-")
             if is_yes_no:
-                # answer_ent = find_property_answer(parse, entity_name2)
-                found_result = yes_no_query(entity_tag, entity_tag2, entity_name2)
+                print("ent: " + entity_name2 + entity_tag)
+                answer_ent = find_property_answer(parse, entity_tag2, entity_name)
+                print("Current answer: " + str(answer_ent))
+                if answer_ent == "Entity_corresponds":
+                    print("    ANSWER: Yes")
+                    found_result = True
+                if answer_ent == "Entity_different":
+                    print("    ANSWER: No")
+                    found_result = True
+                if answer_ent == "No_property_in_sentence":
+                    found_result = yes_no_query(entity_tag, entity_tag2, entity_name2)
 
     if entity_name == 'None':  # If no entity was found use the proper noun or object method to find entity
         for ent_name in parse:
@@ -384,16 +393,37 @@ def create_and_fire_query(line):
                     break
 
             if ent_name2.dep_ == 'attr' or ent_name2.dep_ == 'npadvmod' or ent_name2.dep_ == 'dobj' \
-                    or ent_name2.dep_ == 'pobj' or ent_name2.dep_ == 'ROOT':
+                    or ent_name2.dep_ == 'pobj' or ent_name2.dep_ == 'ROOT' or ent_name2.dep_ == 'nsubj':
                 entity_name2 = ent_name2.lemma_
-                if entity_name == entity_name2:  # If it found the same name find another one
+                if entity_name == entity_name2 or entity_name2 == 'be':  # If it found the same name find another one or it's a ROOT 'be'
                     continue
                 entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '')
                 print('Found slow entity4 in parse. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(
                     entity_tag2) + "-")
+                if ent_name2.dep_ == 'nsubj':  # if subject of the sentence if found, switch subject and object around
+                    switcher = entity_tag
+                    entity_tag = entity_tag2
+                    entity_tag2 = switcher
+                    switcher = entity_name
+                    entity_name = entity_name2
+                    entity_name2 = switcher
+                if entity_tag2 == 'empty':
+                    continue
+                else:
+                    break
 
         if entity_tag2 != 'None':  # if entity 2 is not empty
-            found_result = yes_no_query(entity_tag, entity_tag2, entity_name2)
+            print("Ent2: " + entity_name2 + " " + entity_tag)
+            answer_ent = find_property_answer(parse, entity_tag2, entity_name)
+            print("Answer using property: " + str(answer_ent))
+            if answer_ent == "Entity_corresponds":
+                print("    ANSWER: Yes")
+                found_result = True
+            if answer_ent == "Entity_different":
+                print("    ANSWER: No")
+                found_result = True
+            if answer_ent == "No_property_in_sentence":
+                found_result = yes_no_query(entity_tag, entity_tag2, entity_name2)
 
     if not found_result:
         '''QUICK FIND'''
@@ -529,89 +559,58 @@ def find_answer(property_name, entity_name, entity_tag, is_count, is_age):
     return property_tag, found_result
 
 
-'''Deze functie is not niet getest! Het idee ervan is dat je voor plekken waar 
-   'found_result = yes_no_query(entity_tag, entity_tag2, entity_name2)' staat deze functie aanroept.
+'''Voor plekken waar 'found_result = yes_no_query(entity_tag, entity_tag2, entity_name2)' staat deze functie aanroept.
    Het antwoord hiervan moet dat natuurlijk meegenomen worden in de yes_no_query() functie.
    Deze functie evalueert nu of er een property in de zin staat (a.d.h.v. quick find) en queried de database dan of 
    die met entity 1 en de gevonden property op een antwoord uitkomt dat hetzelfde is als entity 2'''
-# def find_property_answer(parse, entity_tag, entity_name2):
-#     prop_name = ''
+def find_property_answer(parse, entity_tag, entity_name2):
+    prop_name = ''
+    prop_tag = ''
+
+    for token in parse:
+        if token.dep_ == 'appos' or token.dep_ == 'attr':
+            prop_name = token.lemma_
+            print("Y/N Found property name: " + prop_name)
+    if prop_name:
+        prop_tag = find_tag(prop_name, PROPERTY, FIRST_TRY, False, entity_tag)
+        print("Y/N Found property tag: " + prop_tag)
+    if prop_tag == EMPTY or not prop_tag or entity_name2 == 'None':  # Else property tag is empty, so we assume no property has been found
+        return "No_property_in_sentence"  # return that the answer of the yes/no entity query should be respected
+    else:
+        same_result = compare_answer(prop_tag, entity_tag, entity_name2)
+        # If the entity name answer using a property is the same as the second entity in the question
+        if same_result:
+            return "Entity_corresponds"
+        else:
+            return "Entity_different"  # The entity and the answer don't correspond (e.g. asking if Billy is the Wife of Miley Cyrus)
+
 #
-#     for token in parse:
-#         if token.pos_ == "ADJ":
-#             if "st" in token.text:
-#                 print("Y/N ADJective property: -" + prop_name + token.text + "-")
-#                 prop_name = prop_name + token.text + " "
-#                 superlative = True
-#
-#         elif token.dep_ == "advmod":
-#             if token.text in things_of:
-#                 if token.head.lemma_ in things_of:
-#                     print("Y/N Property: -" + prop_name + things_of[
-#                         token.head.lemma_] + "- Token head lemma of Adverbial modifier (advmod)")
-#                     prop_name = prop_name + things_of[token.head.lemma_]
-#                 else:
-#                     print("Y/N Property: -" + prop_name + things_of[
-#                         token.text] + "- Token text of Adverbial modifier (advmod)")
-#                     prop_name = prop_name + things_of[token.text]
-#                 if token.head.lemma_ != "long" and token.head.lemma_ != "old":
-#                     print("Y/N Property: " + prop_name + " of- Long Adverbial modifier (advmod)")
-#                     prop_name = prop_name + " of "
-#
-#         elif token.dep_ == "ROOT" or token.dep_ == "advcl":
-#             if token.text == "born":
-#                 prop_name = prop_name + "birth"
-#             elif token.lemma_ == "die":
-#                 prop_name = prop_name + "death"
-#             elif token.lemma_ == "come":
-#                 prop_name = prop_name + "origin"
-#             elif token.lemma_ == "formed":
-#                 prop_name = prop_name + "formation"
-#             print("Y/N Property: -" + prop_name + "- ROOT or adverbial clause modifier (advcl). It's birth, death or origin")
-#
-#         elif token.tag_ in noun_tags:
-#             # If P is in the token tag, then its token text is an entity
-#             if not "P" in token.tag_:
-#                 if prop_name in things_of.values():
-#                     prop_name = prop_name + " of " + token.lemma_
-#                     print("Y/N Property: -" + prop_name + "- P is not in token tag. In things_of found")
-#                 elif token.dep_ != "pobj":
-#                     prop_name = prop_name + replace(token.lemma_)
-#         prop_tag = find_tag(prop_name, PROPERTY, FIRST_TRY, False, entity_tag)
-#         if prop_tag != 'empty':
-#             # If the entity name answer using a property is the same as the second entity in the question
-#             if entity_name2 == compare_answer(prop_tag, entity_tag, entity_name2):
-#                 return True
-#             else:
-#                 return False  # The entity and the answer don't correspond (e.g. asking if Billy is the Wife of Miley Cyrus)
-#
-#         else:  # Else property tag is empty, so we assume no property has been found
-#             return True  # return that the answer of the yes/no entity query should be respected
-#
-# #
-# def compare_answer(prop_tag, entity_tag, entity_name2):
-#         query = '''
-#          SELECT ?property WHERE {
-#              wd:%s wdt:%s ?prop.
-#              SERVICE wikibase:label {
-#                  bd:serviceParam wikibase:language "en".
-#                  ?prop rdfs:label ?property
-#              }
-#          }''' % (entity_tag, prop_tag)
-#
-#         data = requests.get(sparql_url,
-#                             params={'query': query, 'format': 'json'}).json()
-#
-#         # If no answer is found return empty
-#         if len(data['results']['bindings']) == EMPTY:
-#             return EMPTY
-#         for item in data['results']['bindings']:
-#             for var in item:
-#                 if item[var]['value'] == entity_name2:
-#                     return True
-#                 # Maybe this always evaluates to false??? due to it not being a string (surround with str()???
-#                 else:
-#                     return False
+def compare_answer(prop_tag, entity_tag, entity_name2):
+        print("prop tag: " + prop_tag + " ent tag: " + entity_tag + " ent name 2: " + entity_name2)
+        query = '''
+         SELECT ?property WHERE {
+             wd:%s wdt:%s ?prop.
+             SERVICE wikibase:label {
+                 bd:serviceParam wikibase:language "en".
+                 ?prop rdfs:label ?property
+             }
+         }''' % (entity_tag, prop_tag)
+        print("Using ent_tag: " + entity_tag + " and prop_tag: " + prop_tag + " for comparison query")
+        data = requests.get(sparql_url,
+                            params={'query': query, 'format': 'json'}).json()
+
+        # If no answer is found return empty
+        if len(data['results']['bindings']) == EMPTY:
+            print("empty")
+            return EMPTY
+        for item in data['results']['bindings']:
+            for var in item:
+                print("found answer: " + item[var]['value'] + " in text answer was: " + entity_name2)
+                if str(item[var]['value']) == entity_name2:
+                    return True
+                # Maybe this always evaluates to false??? due to it not being a string (surround with str()???
+                else:
+                    return False
 
 
 def main(argv):
