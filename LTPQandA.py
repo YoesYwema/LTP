@@ -19,7 +19,7 @@ global not_found
 
 noun_tags = ["NN", "NNS", "NNP", "NNPS"]
 things_of = {"When": "date", "Where": "place", "many": "number", "long": "duration", "old":"age", "How": "cause"}
-replacements = {"city":"place", "real":"birth",  "member":"has part", "members":"has part", "because":"cause", "P3283":"P463"}
+replacements = {"city":"place", "real":"birth",  "member":"has part", "members":"has part", "because":"cause", "P3283":"P463","P1559":"P1477"}
 date_props = ['P569', 'P570', 'P571', 'P576', 'P577', 'P1191']
 
 example_queries = [
@@ -87,14 +87,20 @@ example_queries = [
     "What is the age of Eminem",  # also qualified
 
     # yes/no questions
-    "Did Prince die?",  # PROPN + VERB ROOT USe is death    #geeft verkeerde antwoord!
-    "Did Michael Jackson play in the Jackson 5?",
-    "Did Michael Jackson play in a band?"  # PROPN + NOUN pobj (DOESNT WORK SINCE BAND IS THE MEMBER OF PROPERTY)
+    "Is Michael Jackson dead?"
+    "Does Michael Jackson still live?"
+    "Is Michael Jackson alive?"
+    "Has Michael Jackson died?"
+    "Did Prince die?",  # PROPN + VERB ROOT USe is death    #geeft verkeerde antwoord! Want Prince entity verkeerd...
+    "Did Michael Jackson play in the Jackson 5?", # Only works with Five
+    "Did Michael Jackson play in the Jackson Five?",
+    "Did Michael Jackson play in a band?"  # PROPN + NOUN pobj (DOESNT WORK SINCE BAND IS THE MEMBER OF PROPERTY!!!) Replace?
     "Do The Fals make indie rock?",
     # NOUN nsubj + NN amod (" ".join((ent_name2.lemma_, ent_name2.head.lemma_))) THE FALS ARE NOT EASILY FOUND IN WIKIDATA (LIKE THE 100th ENTITY)
     "Does GreenDay make alternative rock?"  # NOUN nsubj + NN amod
     "Is Michael Jackson male?",  # PROPN + NN attr
     "Is Miley Cyrus the daughter of Billy Ray Cyrus?",  # PROPN + compound PROPN (only last word cyrus is pobj)
+    "Is Miley Cyrus the father of Billy Ray Cyrus?",
     "Does deadmau5 make house music?",  # NOUN + NOUN compound (" ".join((ent_name2.lemma_, ent_name2.head.lemma_)))
     "Does Felix Jaehn come from Hamburg?",  # PROPN + PROPN npadvmod
     "Is deadmau5 only a composer?",  # PROPN + NOUN attr  (IT ANSWERS CORRECTLY BUT DUNNO WHY HAHA)
@@ -120,8 +126,7 @@ def print_example_queries():
     print("quick finds = " + str(quick_find) + " slow finds = " + str(slow_find) + " not founds = " + str(not_found))
     print(user_msg)
 
-
-def find_age(entity, date_begin):
+def is_dead(entity, is_yes_no):
     death = False
     query = '''
             SELECT ?property WHERE { 
@@ -134,6 +139,7 @@ def find_age(entity, date_begin):
     death_date = requests.get(sparql_url,
                        params={'query': query, 'format': 'json'}).json()
 
+    print(entity)
     for item in death_date['results']['bindings']:
         for var in item:
             date_end = datetime.strptime(item[var]['value'], '%Y-%m-%dT%H:%M:%SZ')
@@ -142,6 +148,15 @@ def find_age(entity, date_begin):
             month_of_death = int(str(date_end.strftime("%m")), 10)
             date_of_death = int(str(date_end.strftime("%d")), 10)
             death = True
+    if is_yes_no:
+        print(death)
+        return death
+    else:
+        return death, year_of_death, month_of_death, date_of_death
+
+
+def find_age(entity, date_begin):
+    death, year_of_death, month_of_death, date_of_death = is_dead(entity, False)
 
     year_of_birth = int(str(date_begin.strftime("%Y")), 10)
     month_of_birth = int(str(date_begin.strftime("%m")), 10)
@@ -302,6 +317,47 @@ def find_tag(name, ent_or_prop, index, is_age, ent_tag, is_location):
     return "empty"  # at the end of the API list, return empty so no redundant empty statements are evaluated
 
 
+def answer_yes_no(parse, entity_tag, entity_name, is_yes_no, found_result, entity_tag2, entity_name2):
+    print("Y/N Entity2: " + entity_name2 + " " + entity_tag)
+    answer_ent = find_property_answer(parse, entity_tag2, entity_name, entity_name2)
+    print("Answer using property: " + str(answer_ent))
+    dead_or_alive = death_in_yes_no(parse)
+    if dead_or_alive:
+        if dead_or_alive == 'died':
+            if is_dead(entity_tag, is_yes_no):
+                print("    ANSWER: Yes")
+            else:
+                print("    ANSWER: No")
+            found_result = True
+        if dead_or_alive == 'lives':
+            if is_dead(entity_tag, is_yes_no):
+                print("    ANSWER: No")
+            else:
+                print("    ANSWER: Yes")
+            found_result = True
+    if not found_result:
+        if answer_ent == "Entity_corresponds":
+            print("    ANSWER: Yes")
+            found_result = True
+        if answer_ent == "Entity_different":
+            print("    ANSWER: No")
+            found_result = True
+        if answer_ent == "No_property_in_sentence":
+            found_result = yes_no_query(entity_tag, entity_tag2, entity_name2)
+    return found_result
+
+
+def death_in_yes_no(parse):
+    dead_or_alive = ''
+    for death_prop in parse:
+        if death_prop.dep_ == 'ROOT' or death_prop.dep_ == 'acomp':
+            if death_prop.lemma_ == 'alive' or death_prop.lemma_ == 'live':
+                dead_or_alive = 'lives'
+            if death_prop.lemma_ == 'dead' or death_prop.lemma_ == 'die':
+                dead_or_alive = 'died'
+    return dead_or_alive
+
+
 def yes_no_query(entity, entity2, entity_name2):
     query = '''
             ASK WHERE {wd:%s ?prop wd:%s}
@@ -340,7 +396,8 @@ def create_and_fire_query(line):
     '''YES/NO QUESTIONS'''
     # If the first word is a form of to be or to do it is a Yes/No question
     if parse:  # if parse is not null
-        if parse[0].lemma_ == 'do' or parse[0].lemma_ == 'be' or parse[0].lemma_ == 'have':
+        # The capital letters are added for the simple forms since these don't get converted to lowercase somehow
+        if parse[0].lemma_ == 'do' or parse[0].lemma_ == 'Do' or parse[0].lemma_ == 'be' or parse[0].lemma_ == 'have' or parse[0].lemma_ == 'Have':
             print("This is a YES/NO question")
             is_yes_no = True
             entity_tag2 = 'None'
@@ -367,20 +424,15 @@ def create_and_fire_query(line):
         # Try finding a second standard entity here
         else:
             entity_name2 = ent_name.lemma_
+<<<<<<< HEAD
+            entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '')
+            print('Found slow entity2 in parse.ents. Entity_name2: -' + str(entity_name2) + '- entity_tag2: -' + str(entity_tag2) + "-")
+=======
             entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '', is_location)
             print('Found slow entity2 in parse.ents. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(entity_tag2) + "-")
+>>>>>>> 598a2e0205259ad9329bf5a33f5a01e47f5c307e
             if is_yes_no:
-                print("ent: " + entity_name2 + entity_tag)
-                answer_ent = find_property_answer(parse, entity_tag2, entity_name)
-                print("Current answer: " + str(answer_ent))
-                if answer_ent == "Entity_corresponds":
-                    print("    ANSWER: Yes")
-                    found_result = True
-                if answer_ent == "Entity_different":
-                    print("    ANSWER: No")
-                    found_result = True
-                if answer_ent == "No_property_in_sentence":
-                    found_result = yes_no_query(entity_tag, entity_tag2, entity_name2)
+                found_result = answer_yes_no(parse, entity_tag, entity_name, is_yes_no, found_result, entity_tag2, entity_name2)
 
     if entity_name == 'None':  # If no entity was found use the proper noun or object method to find entity
         for ent_name in parse:
@@ -398,8 +450,13 @@ def create_and_fire_query(line):
                 entity_name2 = " ".join((ent_name2.lemma_, ent_name2.head.lemma_))
                 if entity_name == entity_name2:
                     continue
+<<<<<<< HEAD
+                entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '')
+                print('Found slow entity3 in parse. Entity_name2: -' + str(entity_name2) + '- entity_tag2: -' + str(entity_tag2) + "-")
+=======
                 entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '', is_location)
                 print('Found slow entity3 in parse. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(entity_tag2) + "-")
+>>>>>>> 598a2e0205259ad9329bf5a33f5a01e47f5c307e
                 if entity_tag2 == 'empty':
                     continue
                 else:
@@ -410,10 +467,17 @@ def create_and_fire_query(line):
                 entity_name2 = ent_name2.lemma_
                 if entity_name == entity_name2 or entity_name2 == 'be':  # If it found the same name find another one or it's a ROOT 'be'
                     continue
+<<<<<<< HEAD
+                entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '')
+                print('Found slow entity4 in parse. Entity_name2: -' + str(entity_name2) + '- entity2: -' + str(
+=======
                 entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '', is_location)
                 print('Found slow entity4 in parse. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(
+>>>>>>> 598a2e0205259ad9329bf5a33f5a01e47f5c307e
                     entity_tag2) + "-")
-                if ent_name2.dep_ == 'nsubj':  # if subject of the sentence if found, switch subject and object around
+                # if subject of the sentence if found, switch subject and object around and the found string is not a substring of the first entity (because substrings are different, but sometimes classified as nsubj
+                if ent_name2.dep_ == 'nsubj' and entity_name2 not in entity_name2:
+                    print("switcher")
                     switcher = entity_tag
                     entity_tag = entity_tag2
                     entity_tag2 = switcher
@@ -422,21 +486,11 @@ def create_and_fire_query(line):
                     entity_name2 = switcher
                 if entity_tag2 == 'empty':
                     continue
-                else:
-                    break
+                # else:  # probably better to not break here since this finds things like 'make' as well as normal entities
+                #     break
 
         if entity_tag2 != 'None':  # if entity 2 is not empty
-            print("Ent2: " + entity_name2 + " " + entity_tag)
-            answer_ent = find_property_answer(parse, entity_tag2, entity_name)
-            print("Answer using property: " + str(answer_ent))
-            if answer_ent == "Entity_corresponds":
-                print("    ANSWER: Yes")
-                found_result = True
-            if answer_ent == "Entity_different":
-                print("    ANSWER: No")
-                found_result = True
-            if answer_ent == "No_property_in_sentence":
-                found_result = yes_no_query(entity_tag, entity_tag2, entity_name2)
+            found_result = answer_yes_no(parse, entity_tag, entity_name, is_yes_no, found_result, entity_tag2, entity_name2)
 
     if not found_result:
         '''QUICK FIND'''
@@ -465,6 +519,7 @@ def create_and_fire_query(line):
                         prop_name = prop_name + " of "
 
             elif token.dep_ == "ROOT" or token.dep_ == "advcl":
+
                 if token.text == "born":
                     prop_name = prop_name + "birth"
                 elif token.lemma_ == "die":
@@ -590,32 +645,35 @@ def find_answer(property_name, entity_name, entity_tag, is_count, is_age, is_loc
     return property_tag, found_result
 
 
-'''Voor plekken waar 'found_result = yes_no_query(entity_tag, entity_tag2, entity_name2)' staat deze functie aanroept.
-   Het antwoord hiervan moet dat natuurlijk meegenomen worden in de yes_no_query() functie.
-   Deze functie evalueert nu of er een property in de zin staat (a.d.h.v. quick find) en queried de database dan of 
-   die met entity 1 en de gevonden property op een antwoord uitkomt dat hetzelfde is als entity 2'''
-def find_property_answer(parse, entity_tag, entity_name2):
+'''This function is for yes/no question. It evaluates if there's a property in the sentence. Then it queries
+   the database with the compare answer function and returns if it found the same (entity) answer as was
+   found in the sentence'''
+def find_property_answer(parse, entity_tag, entity_name, entity_name2):
     prop_name = ''
     prop_tag = ''
 
     for token in parse:
         if token.dep_ == 'appos' or token.dep_ == 'attr':
-            prop_name = token.lemma_
-            print("Y/N Found property name: " + prop_name)
+            if token.lemma_ != entity_name2:  # For example 'male' would be found as entity2 and property
+                prop_name = token.lemma_
+                print(entity_name2)
+                print("Y/N Found property name: " + prop_name)
     if prop_name:
         prop_tag = find_tag(prop_name, PROPERTY, FIRST_TRY, False, entity_tag, False)
         print("Y/N Found property tag: " + prop_tag)
-    if prop_tag == EMPTY or not prop_tag or entity_name2 == 'None':  # Else property tag is empty, so we assume no property has been found
+    if prop_tag == EMPTY or not prop_tag or entity_name == 'None':  # Else property tag is empty, so we assume no property has been found
         return "No_property_in_sentence"  # return that the answer of the yes/no entity query should be respected
     else:
-        same_result = compare_answer(prop_tag, entity_tag, entity_name2)
+        same_result = compare_answer(prop_tag, entity_tag, entity_name)
         # If the entity name answer using a property is the same as the second entity in the question
         if same_result:
             return "Entity_corresponds"
         else:
             return "Entity_different"  # The entity and the answer don't correspond (e.g. asking if Billy is the Wife of Miley Cyrus)
 
-#
+'''This function is for yes/no question. It queries the database to see if it finds the second entity in 
+   the sentence, after which it compares the queried and sentence entity. 
+   Finally, it returns the answer to find_property_answer'''
 def compare_answer(prop_tag, entity_tag, entity_name2):
         print("prop tag: " + prop_tag + " ent tag: " + entity_tag + " ent name 2: " + entity_name2)
         query = '''
@@ -639,7 +697,6 @@ def compare_answer(prop_tag, entity_tag, entity_name2):
                 print("found answer: " + item[var]['value'] + " in text answer was: " + entity_name2)
                 if str(item[var]['value']) == entity_name2:
                     return True
-                # Maybe this always evaluates to false??? due to it not being a string (surround with str()???
                 else:
                     return False
 
