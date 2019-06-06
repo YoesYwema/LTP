@@ -22,7 +22,6 @@ things_of = {"When": "date", "Where": "place", "many": "number", "long": "durati
 replacements = {"city":"place", "real":"birth",  "member":"has part", "members":"has part", "because":"cause", "P3283":"P463"}
 date_props = ['P569', 'P570', 'P571', 'P576', 'P577', 'P1191']
 
-
 example_queries = [
     # What-questions
     "What was the cause of death of Mozart?",
