@@ -17,7 +17,7 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/LTPQandA.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="511">
+            <state relative-caret-position="147">
               <caret line="415" column="23" selection-start-line="415" selection-start-column="23" selection-end-line="415" selection-end-column="23" />
               <folding>
                 <element signature="e#20#30#0" expanded="true" />
@@ -29,8 +29,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/scratch.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="344">
-              <caret line="39" column="24" selection-start-line="39" selection-start-column="14" selection-end-line="39" selection-end-column="58" />
+            <state relative-caret-position="551">
+              <caret line="86" column="26" selection-start-line="86" selection-start-column="26" selection-end-line="86" selection-end-column="26" />
               <folding>
                 <element signature="e#0#12#0" expanded="true" />
               </folding>
@@ -54,6 +54,7 @@
       <find>hi!</find>
       <find>in text</find>
       <find>text:</find>
+      <find>date_begin</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -78,6 +79,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -89,7 +91,6 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -132,14 +133,14 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-1" y="24" width="1922" height="1057" extended-state="6" />
+    <frame x="-1" y="24" width="1682" height="1027" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.052187666" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.051901028" />
       <window_info id="Structure" order="1" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
-      <window_info anchor="bottom" id="Find" order="1" weight="0.19652551" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.19640853" />
       <window_info anchor="bottom" id="Run" order="2" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
@@ -148,7 +149,7 @@
       <window_info anchor="bottom" id="Version Control" order="7" weight="0.32899022" />
       <window_info anchor="bottom" id="Event Log" order="8" side_tool="true" />
       <window_info anchor="bottom" id="Python Console" order="9" weight="0.32899022" />
-      <window_info active="true" anchor="bottom" id="Terminal" order="10" visible="true" weight="0.36807817" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="10" visible="true" weight="0.3030303" />
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
@@ -166,8 +167,8 @@
     <entry file="file://$USER_HOME$/Downloads/nqueens.py" />
     <entry file="file://$PROJECT_DIR$/scratch.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="344">
-          <caret line="39" column="24" selection-start-line="39" selection-start-column="14" selection-end-line="39" selection-end-column="58" />
+        <state relative-caret-position="551">
+          <caret line="86" column="26" selection-start-line="86" selection-start-column="26" selection-end-line="86" selection-end-column="26" />
           <folding>
             <element signature="e#0#12#0" expanded="true" />
           </folding>
@@ -176,7 +177,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/LTPQandA.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="511">
+        <state relative-caret-position="147">
           <caret line="415" column="23" selection-start-line="415" selection-start-column="23" selection-end-line="415" selection-end-column="23" />
           <folding>
             <element signature="e#20#30#0" expanded="true" />
