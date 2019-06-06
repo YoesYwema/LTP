@@ -19,7 +19,7 @@ global not_found
 
 nountags = ["NN", "NNS", "NNP", "NNPS"]
 things_of = {"When": "date", "Where": "place", "many": "number", "long": "duration", "old":"age", "How": "cause"}
-replacements = {"city":"place", "real":"birth", "member":"has part", "members":"has part", "because":"cause"}
+replacements = {"city":"place", "real":"birth",  "member":"has part", "members":"has part", "because":"cause", "P3283":"P463"}
 dateprops = ['P569', 'P570', 'P571', 'P576', 'P577', 'P1191']
 
 example_queries = [
@@ -188,7 +188,7 @@ def print_answer(property, entity, is_count, is_age):
                 bd:serviceParam wikibase:language "en".
                 ?prop rdfs:label ?property
             }
-        }''' % (entity, property)
+        }''' % (entity, replace(property))
 
     data = requests.get(sparql_url,
              params={'query': query, 'format': 'json'}).json()
