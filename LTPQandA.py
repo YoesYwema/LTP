@@ -19,7 +19,7 @@ global not_found
 
 noun_tags = ["NN", "NNS", "NNP", "NNPS"]
 things_of = {"When": "date", "Where": "place", "many": "number", "long": "duration", "old":"age", "How": "cause"}
-replacements = {"city":"place", "real":"birth",  "member":"has part", "members":"has part", "because":"cause", "P3283":"P463"}
+replacements = {"city":"place", "real":"birth",  "member":"has part", "members":"has part", "because":"cause", "P3283":"P463","P1559":"P1477"}
 date_props = ['P569', 'P570', 'P571', 'P576', 'P577', 'P1191']
 
 
