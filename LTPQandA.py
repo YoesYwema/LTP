@@ -105,7 +105,7 @@ example_queries = [
 "Who was Mozarts oldest child?",
 "To which musical genre(s) can The White Stripes be assigned?"'''
 
-error_msg = "No data found. Try paraphrasing the question (e.g. Prince becomes TAFKAP)."
+error_msg = "No data found. Try paraphrasing the question."
 user_msg = "Please enter a question or quit program by pressing control-D."
 
 '''This function print the examples above and runs the search for answers on them one line at a time '''
@@ -230,13 +230,13 @@ def replace(word):
 
 ''' This function tries different entity and property disambiguations. It then also tries to find 
     an answer with each of these disambiguated combinations'''
-def try_disambiguation(property_name, entity_name, is_count, found_result, is_age):
+def try_disambiguation(property_name, entity_name, is_count, found_result, is_age, is_location):
     index_entities = 0
-    entity_tag = find_tag(entity_name, ENTITY, index_entities, is_age, '')
+    entity_tag = find_tag(entity_name, ENTITY, index_entities, is_age, '', is_location)
     while not found_result and index_entities < 2:  # look through 2 different entities
         index_properties = 0
         while not found_result and index_properties < 7:  # look though 7 different properties
-            property_tag = find_tag(property_name, PROPERTY, index_properties, is_age, entity_tag)
+            property_tag = find_tag(property_name, PROPERTY, index_properties, is_age, entity_tag, is_location)
             print("Tag disambiguation: " + property_tag)
             # If no more results can be found by ambiguation stop the loop
             if property_tag == "empty":
@@ -244,14 +244,14 @@ def try_disambiguation(property_name, entity_name, is_count, found_result, is_ag
             found_result = print_answer(property_tag, entity_tag, is_count, False)
             index_properties += 1
         index_entities += 1
-        entity_tag = find_tag(entity_name, ENTITY, index_entities, is_age, '')
+        entity_tag = find_tag(entity_name, ENTITY, index_entities, is_age, '', is_location)
         if entity_tag == "empty":
             break
     return found_result
 
 
 '''Find the type of entity: a human or something else'''
-def instance_of(ent_tag):
+def instance_of(ent_tag, is_age):
     query = '''
             SELECT ?instance WHERE {
                 wd:%s wdt:P31 ?class.
@@ -266,9 +266,15 @@ def instance_of(ent_tag):
     for item in instdata['results']['bindings']:
         for var in item:
             if item[var]['value'] == "human":
-                name = 'date of birth'
+                if (not is_age):
+                    name = 'date of birth'
+                else:
+                    name = 'place of birth'
             elif item[var]['value'] == "band":
-                name = 'inception'
+                if (not is_age):
+                    name = 'inception'
+                else:
+                    name = 'location of formation'
             else:
                 name = 'date of publication'
     return name
@@ -276,14 +282,14 @@ def instance_of(ent_tag):
 
 ''' Find a property or entity tag from the WikiData API given the current property/entity name
     The index indicates which tag in the API's list of tags needs to be returned'''
-def find_tag(name, ent_or_prop, index, is_age, ent_tag):
+def find_tag(name, ent_or_prop, index, is_age, ent_tag, is_location):
     # print("hi! name = ",name)
     if ent_or_prop == ENTITY:  # Currently looking for the most referenced entity
         params = {'action': 'wbsearchentities', 'language': 'en', 'format': 'json'}
     if ent_or_prop == PROPERTY:  # Currently looking for the most referenced property
         params = {'action': 'wbsearchentities', 'language': 'en', 'format': 'json', 'type': 'property'}
-        if is_age:
-            name = instance_of(ent_tag)
+        if is_age or is_location:
+            name = instance_of(ent_tag, is_age)
     params['search'] = name
     json = requests.get(wiki_api_url, params).json()
     for iteration, result in enumerate(json['search'], start=0):
@@ -326,8 +332,8 @@ def create_and_fire_query(line):
     found_result = False
     is_count = False
     is_age = False
+    is_location = False
     is_yes_no = False
-    superlative = False  # Why is this here???
 
     '''YES/NO QUESTIONS'''
     # If the first word is a form of to be or to do it is a Yes/No question
@@ -340,6 +346,8 @@ def create_and_fire_query(line):
     for token in parse:
         if token.text == "age" or token.text == "old":
             is_age = True
+        if token.text == "Where":
+            is_location = True
 
     '''Look for entity'''
     i = 0
@@ -347,14 +355,14 @@ def create_and_fire_query(line):
         if i == 0:
             if ent_name.label_ != 'LOC':
                 entity_name = ent_name.lemma_
-                entity_tag = find_tag(entity_name, ENTITY, FIRST_TRY, is_age, '')
+                entity_tag = find_tag(entity_name, ENTITY, FIRST_TRY, is_age, '', is_location)
                 print('Found slow entity in parse.ents. Entity_tag: -' + str(entity_name) + '- entity: -' + str(
                     entity_tag) + "-")
                 i += 1
         # Try finding a second standard entity here
         else:
             entity_name2 = ent_name.lemma_
-            entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '')
+            entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '', is_location)
             print('Found slow entity2 in parse.ents. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(entity_tag2) + "-")
             if is_yes_no:
                 print("ent: " + entity_name2 + entity_tag)
@@ -375,7 +383,7 @@ def create_and_fire_query(line):
             if ent_name.pos_ == 'PROPN' or ent_name.dep_ == 'pobj' or ent_name.dep_ == 'nsubj':
                 # IF compound !!!
                 entity_name = ent_name.lemma_
-                entity_tag = find_tag(entity_name, ENTITY, FIRST_TRY, is_age, '')
+                entity_tag = find_tag(entity_name, ENTITY, FIRST_TRY, is_age, '', is_location)
                 print('Found slow entity as proper noun or pobj. Query_ent: -' + str(entity_name) + '- entity: -' + str(entity_tag) + "-")
 
     if is_yes_no and not found_result:
@@ -385,7 +393,7 @@ def create_and_fire_query(line):
                 entity_name2 = " ".join((ent_name2.lemma_, ent_name2.head.lemma_))
                 if entity_name == entity_name2:
                     continue
-                entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '')
+                entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '', is_location)
                 print('Found slow entity3 in parse. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(entity_tag2) + "-")
                 if entity_tag2 == 'empty':
                     continue
@@ -397,7 +405,7 @@ def create_and_fire_query(line):
                 entity_name2 = ent_name2.lemma_
                 if entity_name == entity_name2 or entity_name2 == 'be':  # If it found the same name find another one or it's a ROOT 'be'
                     continue
-                entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '')
+                entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '', is_location)
                 print('Found slow entity4 in parse. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(
                     entity_tag2) + "-")
                 if ent_name2.dep_ == 'nsubj':  # if subject of the sentence if found, switch subject and object around
@@ -460,7 +468,7 @@ def create_and_fire_query(line):
                     prop_name = prop_name + "origin"
                 elif token.lemma_ == "formed":
                     prop_name = prop_name + "formation"
-                print("Property: -" + prop_name + "- ROOT or adverbial clause modifier (advcl). It's birth, death or origin")
+                print("Property: -" + prop_name + "- ROOT or adverbial clause modifier (advcl). It's birth, death, origin or formation")
 
             elif token.tag_ in noun_tags:
                 # If P is in the token tag, then its token text is an entity
@@ -483,14 +491,14 @@ def create_and_fire_query(line):
             if not ent_name:
                 ent_name = entity_name
             print("now " + prop_name, "ent =", ent_name)
-            ent_tag = find_tag(ent_name, ENTITY, FIRST_TRY, is_age, '')
-            prop_tag = find_tag(prop_name, PROPERTY, FIRST_TRY, is_age, ent_tag)
+            ent_tag = find_tag(ent_name, ENTITY, FIRST_TRY, is_age, '', is_location)
+            prop_tag = find_tag(prop_name, PROPERTY, FIRST_TRY, is_age, ent_tag, is_location)
             found_result = print_answer(prop_tag, ent_tag, is_count, is_age)
             print("   QUICK FIND FOUND entity: -" + ent_tag + " " + ent_name + "- and property: -" + prop_tag + " " + prop_name + "-")
             # If it didn't find anything, then try disambiguating result
             if not found_result:
                 print("DISAMBIGUATION phase quick find")
-                found_result = try_disambiguation(prop_name, ent_name, is_count, found_result, is_age)
+                found_result = try_disambiguation(prop_name, ent_name, is_count, found_result, is_age, is_location)
             if found_result:
                 global quick_find
                 quick_find += 1
@@ -532,7 +540,7 @@ def create_and_fire_query(line):
                         print("Trying property: -" + property_name + "-, as root (a word that means something)")
 
                 if property_name and not property_name == 'be':
-                    property_tag, found_result = find_answer(property_name, entity_name, entity_tag, is_count, is_age)
+                    property_tag, found_result = find_answer(property_name, entity_name, entity_tag, is_count, is_age, is_location)
                     if not found_result:  # If you don't find a result don't try again with the same name
                         property_name = ""
                     print("Tag: " + property_tag)
@@ -551,11 +559,11 @@ def create_and_fire_query(line):
             print("Slow find count = " + str(slow_find))
 
 
-def find_answer(property_name, entity_name, entity_tag, is_count, is_age):
-    property_tag = find_tag(property_name, PROPERTY, FIRST_TRY, is_age, entity_tag)
+def find_answer(property_name, entity_name, entity_tag, is_count, is_age, is_location):
+    property_tag = find_tag(property_name, PROPERTY, FIRST_TRY, is_age, entity_tag, is_location)
     found_result = print_answer(property_tag, entity_tag, is_count, is_age)
     if not found_result:
-        found_result = try_disambiguation(property_name, entity_name, is_count, found_result, is_age)
+        found_result = try_disambiguation(property_name, entity_name, is_count, found_result, is_age, is_location)
     return property_tag, found_result
 
 
@@ -572,7 +580,7 @@ def find_property_answer(parse, entity_tag, entity_name2):
             prop_name = token.lemma_
             print("Y/N Found property name: " + prop_name)
     if prop_name:
-        prop_tag = find_tag(prop_name, PROPERTY, FIRST_TRY, False, entity_tag)
+        prop_tag = find_tag(prop_name, PROPERTY, FIRST_TRY, False, entity_tag, False)
         print("Y/N Found property tag: " + prop_tag)
     if prop_tag == EMPTY or not prop_tag or entity_name2 == 'None':  # Else property tag is empty, so we assume no property has been found
         return "No_property_in_sentence"  # return that the answer of the yes/no entity query should be respected
