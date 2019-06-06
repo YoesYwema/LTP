@@ -66,18 +66,19 @@ example_queries = [
     "What does EDM stand for?",  # definition
     "What is a kazoo?",  # definition
     "How long is Bohemian Rhapsody?",  # werkt, maar wel alleen met vraagteken!!!
-    "How old is The Dark Side Of The Moon?",  # works
-    "How long is The Dark Side Of The Moon?",  # doesn't work, wel gedefinieerd op wikidata tho
+    "How old is The Dark Side Of The Moon?",
+    "How long is The Dark Side Of The Moon?",
 
     # in what city/country/place/year/band
-    "In what city was Die Antwoord formed?",  # geeft alleen land!
+    "In what city was Die Antwoord formed?",  # geeft nog steeds alleen land!
     "In what city was Eminem born",  # werkt
     "In what year was Die Antwoord formed?",  # geeft 1 January
     "In what year did Prince die",  # geeft 1 January
 
     # count questions
-    "How many members does Nirvana have?",
+    "How many members does Nirvana have?", #
     "How many children does Adele have?",  # defined
+    "How many strings does a violin usually have?", #DOES NOT WORK AT ALL (ws niet gevraagd)
     # feel free to add
 
     # age questions (eerste drie werken)
@@ -266,15 +267,16 @@ def instance_of(ent_tag, is_age):
     for item in instdata['results']['bindings']:
         for var in item:
             if item[var]['value'] == "human":
-                if (not is_age):
+                if (is_age):
                     name = 'date of birth'
                 else:
                     name = 'place of birth'
             elif item[var]['value'] == "band":
-                if (not is_age):
+                if (is_age):
                     name = 'inception'
                 else:
                     name = 'location of formation'
+                    print("found location of formation")
             else:
                 name = 'date of publication'
     return name
@@ -353,12 +355,15 @@ def create_and_fire_query(line):
     i = 0
     for ent_name in parse.ents:  # Try to find the entity with the entity method first
         if i == 0:
+            # print("ent_name text ", ent_name.text, "dep: ", ent_name.dep_)
             if ent_name.label_ != 'LOC':
                 entity_name = ent_name.lemma_
                 entity_tag = find_tag(entity_name, ENTITY, FIRST_TRY, is_age, '', is_location)
                 print('Found slow entity in parse.ents. Entity_tag: -' + str(entity_name) + '- entity: -' + str(
                     entity_tag) + "-")
+                #print("ent_name text ", entity_name.text, "dep: ", ent_name.dep_)
                 i += 1
+
         # Try finding a second standard entity here
         else:
             entity_name2 = ent_name.lemma_
@@ -435,7 +440,8 @@ def create_and_fire_query(line):
 
     if not found_result:
         '''QUICK FIND'''
-        ent_name = ""
+        if not entity_name:
+            ent_name = ""
         prop_name = ""
 
         for token in parse:
@@ -443,7 +449,6 @@ def create_and_fire_query(line):
                 if "st" in token.text:
                     print("ADJective property: -" + prop_name + token.text + "-")
                     prop_name = prop_name + token.text + " "
-                    superlative = True
 
             elif token.dep_ == "advmod":
                 if token.text in things_of:
@@ -466,7 +471,7 @@ def create_and_fire_query(line):
                     prop_name = prop_name + "death"
                 elif token.lemma_ == "come":
                     prop_name = prop_name + "origin"
-                elif token.lemma_ == "formed":
+                elif token.lemma_ == "form":
                     prop_name = prop_name + "formation"
                 print("Property: -" + prop_name + "- ROOT or adverbial clause modifier (advcl). It's birth, death, origin or formation")
 
@@ -478,14 +483,29 @@ def create_and_fire_query(line):
                         print("Property: -" + prop_name + "- P is not in token tag. In things_of found")
                     elif token.dep_ != "pobj":
                         prop_name = prop_name + replace(token.lemma_)
+                        # BUG: Queen werkt niet
                     else:
-                        ent_name = ent_name + token.text + " "
-                        print("Entity: -" + ent_name + "- P is not in token tag and prop is not in things_of.")
+                        if not entity_name:
+                            ent_name = ent_name + token.text + " "
+                            print("Entity: -" + ent_name + "- P is not in token tag and prop is not in things_of.")
+                            if not prop_name and token.head.lemma_ == "in":
+                                print("who are in?")
+                                prop_name = "has part"
+
                 else:
                     # Adds every entity in the phrase together
-                    ent_name = ent_name + token.text + " "
-                    print("Entity: -" + ent_name + "- P is in token tag")
+                    if not entity_name:
+                        ent_name = ent_name + token.text + " "
+                        print("Entity: -" + ent_name + "- P is in token tag")
+                        if not prop_name and token.head.lemma_ == "in":
+                            print("who are in?")
+                            prop_name = "has part"
+
         # If quick find found a property and an entity, Try to print an answer
+
+        if entity_name:
+            ent_name = entity_name
+
         print(prop_name, "ent =", ent_name)
         if prop_name != "":
             if not ent_name:
@@ -517,6 +537,7 @@ def create_and_fire_query(line):
 
             # If the property consists of multiple words join them together
             if not found_result:
+
                 if (prop_name.dep_ == 'compound' and prop_name.tag_ == 'NN') or \
                         (prop_name.pos_ == 'ADJ' and prop_name.dep_ == 'amod'):
                     # Dit verandert naar prop.text ipv prop,lemma_ omdat je het volledige bijv naamwoord wilt (e.g. highest note)
@@ -544,6 +565,8 @@ def create_and_fire_query(line):
                     if not found_result:  # If you don't find a result don't try again with the same name
                         property_name = ""
                     print("Tag: " + property_tag)
+
+
 
         '''Print how the program did'''
         if not found_result and line:  # and line means the line is not empty
