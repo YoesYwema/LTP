@@ -424,13 +424,8 @@ def create_and_fire_query(line):
         # Try finding a second standard entity here
         else:
             entity_name2 = ent_name.lemma_
-<<<<<<< HEAD
-            entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '')
-            print('Found slow entity2 in parse.ents. Entity_name2: -' + str(entity_name2) + '- entity_tag2: -' + str(entity_tag2) + "-")
-=======
             entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '', is_location)
             print('Found slow entity2 in parse.ents. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(entity_tag2) + "-")
->>>>>>> 598a2e0205259ad9329bf5a33f5a01e47f5c307e
             if is_yes_no:
                 found_result = answer_yes_no(parse, entity_tag, entity_name, is_yes_no, found_result, entity_tag2, entity_name2)
 
@@ -450,13 +445,8 @@ def create_and_fire_query(line):
                 entity_name2 = " ".join((ent_name2.lemma_, ent_name2.head.lemma_))
                 if entity_name == entity_name2:
                     continue
-<<<<<<< HEAD
-                entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '')
-                print('Found slow entity3 in parse. Entity_name2: -' + str(entity_name2) + '- entity_tag2: -' + str(entity_tag2) + "-")
-=======
                 entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '', is_location)
                 print('Found slow entity3 in parse. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(entity_tag2) + "-")
->>>>>>> 598a2e0205259ad9329bf5a33f5a01e47f5c307e
                 if entity_tag2 == 'empty':
                     continue
                 else:
@@ -467,13 +457,8 @@ def create_and_fire_query(line):
                 entity_name2 = ent_name2.lemma_
                 if entity_name == entity_name2 or entity_name2 == 'be':  # If it found the same name find another one or it's a ROOT 'be'
                     continue
-<<<<<<< HEAD
-                entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '')
-                print('Found slow entity4 in parse. Entity_name2: -' + str(entity_name2) + '- entity2: -' + str(
-=======
                 entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '', is_location)
                 print('Found slow entity4 in parse. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(
->>>>>>> 598a2e0205259ad9329bf5a33f5a01e47f5c307e
                     entity_tag2) + "-")
                 # if subject of the sentence if found, switch subject and object around and the found string is not a substring of the first entity (because substrings are different, but sometimes classified as nsubj
                 if ent_name2.dep_ == 'nsubj' and entity_name2 not in entity_name2:
