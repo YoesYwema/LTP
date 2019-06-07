@@ -19,7 +19,8 @@ global not_found
 
 noun_tags = ["NN", "NNS", "NNP", "NNPS"]
 things_of = {"When": "date", "Where": "place", "many": "number", "long": "duration", "old":"age", "How": "cause"}
-replacements = {"city":"place", "real":"birth",  "member":"has part", "members":"has part", "because":"cause", "P3283":"P463","P1559":"P1477"}
+replacements = {"city":"place", "real":"birth",  "member":"has part", "members":"has part", "because":"cause", "P3283":"P463","P1559":"P1477","P436":"P361"}
+roots = {"bear":"birth", "die":"death", "come":"origin", "form":"formation"}
 date_props = ['P569', 'P570', 'P571', 'P576', 'P577', 'P1191']
 
 example_queries = [
@@ -65,7 +66,7 @@ example_queries = [
     "For what genre are music duo The Upbeats best known?",
     "What does EDM stand for?",  # definition
     "What is a kazoo?",  # definition
-    "How long is Bohemian Rhapsody?",  # werkt, maar wel alleen met vraagteken!!!
+    "How long is Bohemian Rhapsody?",
     "How old is The Dark Side Of The Moon?",
     "How long is The Dark Side Of The Moon?",
 
@@ -140,6 +141,10 @@ def is_dead(entity, is_yes_no):
                        params={'query': query, 'format': 'json'}).json()
 
     print(entity)
+    if not death_date['results']['bindings']:
+        print("not dead")
+        return False, 0, 0, 0
+
     for item in death_date['results']['bindings']:
         for var in item:
             date_end = datetime.strptime(item[var]['value'], '%Y-%m-%dT%H:%M:%SZ')
@@ -150,7 +155,7 @@ def is_dead(entity, is_yes_no):
             death = True
     if is_yes_no:
         print(death)
-        return death
+        return death, 0, 0, 0
     else:
         return death, year_of_death, month_of_death, date_of_death
 
@@ -414,7 +419,7 @@ def create_and_fire_query(line):
         if i == 0:
             # print("ent_name text ", ent_name.text, "dep: ", ent_name.dep_)
             if ent_name.label_ != 'LOC':
-                entity_name = ent_name.lemma_
+                entity_name = ent_name.lemma_.replace("'s", "").replace("'", "")
                 entity_tag = find_tag(entity_name, ENTITY, FIRST_TRY, is_age, '', is_location)
                 print('Found slow entity in parse.ents. Entity_tag: -' + str(entity_name) + '- entity: -' + str(
                     entity_tag) + "-")
@@ -423,7 +428,7 @@ def create_and_fire_query(line):
 
         # Try finding a second standard entity here
         else:
-            entity_name2 = ent_name.lemma_
+            entity_name2 = ent_name.lemma_.replace("'s", "").replace("'", "")
             entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '', is_location)
             print('Found slow entity2 in parse.ents. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(entity_tag2) + "-")
             if is_yes_no:
@@ -434,7 +439,7 @@ def create_and_fire_query(line):
             # Seems dangerous to look for pobj here because you're most often looking for the subject of the sentence?
             if ent_name.pos_ == 'PROPN' or ent_name.dep_ == 'pobj' or ent_name.dep_ == 'nsubj':
                 # IF compound !!!
-                entity_name = ent_name.lemma_
+                entity_name = ent_name.lemma_.replace("'s", "").replace("'", "")
                 entity_tag = find_tag(entity_name, ENTITY, FIRST_TRY, is_age, '', is_location)
                 print('Found slow entity as proper noun or pobj. Query_ent: -' + str(entity_name) + '- entity: -' + str(entity_tag) + "-")
 
@@ -479,8 +484,8 @@ def create_and_fire_query(line):
 
     if not found_result:
         '''QUICK FIND'''
-        if not entity_name:
-            ent_name = ""
+        # if not entity_name:
+        ent_name = ""
         prop_name = ""
 
         for token in parse:
@@ -504,47 +509,42 @@ def create_and_fire_query(line):
                         prop_name = prop_name + " of "
 
             elif token.dep_ == "ROOT" or token.dep_ == "advcl":
-
-                if token.text == "born":
-                    prop_name = prop_name + "birth"
-                elif token.lemma_ == "die":
-                    prop_name = prop_name + "death"
-                elif token.lemma_ == "come":
-                    prop_name = prop_name + "origin"
-                elif token.lemma_ == "form":
-                    prop_name = prop_name + "formation"
-                print("Property: -" + prop_name + "- ROOT or adverbial clause modifier (advcl). It's birth, death, origin or formation")
+                if  (token.lemma_ in roots):
+                    prop_name = prop_name + roots[token.lemma_]
+                    print(
+                        "Property: -" + prop_name + "- ROOT or adverbial clause modifier (advcl). It's birth, death, origin or formation")
+                else:
+                    print("token lemma "+token.lemma_+" not in roots")
 
             elif token.tag_ in noun_tags:
                 # If P is in the token tag, then its token text is an entity
+                # print((not prop_name) + "=propname, "+token.head.lemma_+"=headlemma")
                 if not "P" in token.tag_:
                     if prop_name in things_of.values():
                         prop_name = prop_name + " of " + token.lemma_
                         print("Property: -" + prop_name + "- P is not in token tag. In things_of found")
                     elif token.dep_ != "pobj":
                         prop_name = prop_name + replace(token.lemma_)
-                        # BUG: Queen werkt niet
                     else:
-                        if not entity_name:
-                            ent_name = ent_name + token.text + " "
-                            print("Entity: -" + ent_name + "- P is not in token tag and prop is not in things_of.")
-                            if not prop_name and token.head.lemma_ == "in":
-                                print("who are in?")
-                                prop_name = "has part"
-
-                else:
-                    # Adds every entity in the phrase together
-                    if not entity_name:
+                        # if not entity_name:
                         ent_name = ent_name + token.text + " "
-                        print("Entity: -" + ent_name + "- P is in token tag")
+                        print("Entity: -" + ent_name + "- P is not in token tag and prop is not in things_of.")
                         if not prop_name and token.head.lemma_ == "in":
                             print("who are in?")
                             prop_name = "has part"
 
-        # If quick find found a property and an entity, Try to print an answer
+                else:
+                    # Adds every entity in the phrase together
+                    # if not entity_name:
+                    ent_name = ent_name + token.text + " "
+                    print("Entity: -" + ent_name + "- P is in token tag")
+                    if not prop_name and token.head.lemma_ == "in":
+                        print("who are in?")
+                        prop_name = "has part"
 
-        if entity_name:
-            ent_name = entity_name
+        # If quick find found a property and an entity, Try to print an answer
+        # if entity_name:
+        #     ent_name = entity_name
 
         print(prop_name, "ent =", ent_name)
         if prop_name != "":

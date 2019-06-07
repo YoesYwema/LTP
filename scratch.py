@@ -67,6 +67,9 @@ for q in sys.stdin :
     for token in parse:
         print("\t".join((token.text, token.lemma_, token.pos_, token.tag_, token.dep_, token.head.lemma_)))
 
+    for ent in parse.ents:
+        print(ent.lemma_.replace("'s", "").replace("'", ""), ent.label_)
+
     # death = False
     # query = '''
     #         SELECT ?property WHERE {
