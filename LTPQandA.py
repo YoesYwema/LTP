@@ -19,54 +19,53 @@ global not_found
 
 noun_tags = ["NN", "NNS", "NNP", "NNPS"]
 things_of = {"When": "date", "Where": "place", "many": "number", "long": "duration", "old":"age", "How": "cause"}
-replacements = {"city":"place", "real":"birth",  "member":"has part", "members":"has part", "because":"cause", "P3283":"P463","P1559":"P1477","P436":"P361"}
-roots = {"bear":"birth", "die":"death", "come":"origin", "form":"formation"}
+replacements = {"city":"place", "real":"birth",  "member":"has part", "members":"has part", "because":"cause", "P3283":"P463","P1559":"P1477"}
 date_props = ['P569', 'P570', 'P571', 'P576', 'P577', 'P1191']
 
 example_queries = [
     # What-questions
-    "What was the cause of death of Mozart?",
-    "What were the causes of death of Michael Jackson?",
-    "What is the gender of Conchita Wurst?",
-    "What is the highest note of a piano?",  # defined
-    "What is the record label of The Clash",
-    "What is the real name of Eminem?",
-    "What is the website of Mumford and Sons?",  # Mumford & Sons?
-    "What is the birth date of Elvis Presley?",
+    "What was the cause of death of Mozart?", #streptococcal pharyngitis
+    "What were the causes of death of Michael Jackson?", #combined drug intoxication, myocardial infarction
+    "What is the gender of Conchita Wurst?", #male
+    "What is the highest note of a piano?",  # defined, answer = Eighth octave C
+    "What is the record label of The Clash", #Sony Music
+    "What is the real name of Eminem?", #Marshall Bruce Mathers III
+    "What is the website of Mumford and Sons?",  #http://mumfordandsons.com/ | Doesn't work yet
+    "What is the birth date of Elvis Presley?", #8 January 1935
 
     # Who-questions
-    "Who was the composer of The Four Seasons?",
-    "Who was the father of Michael Jackson?",
-    "Who is the stepparent of Neneh Cherry",
+    "Who was the composer of The Four Seasons?", #Antonio Vivaldi| Werkt nog niet
+    "Who was the father of Michael Jackson?", #Joe Jackson
+    "Who is the stepparent of Neneh Cherry", #Don Cherry
 
     # Qualified statement questions
-    "Who are the members of Metallica?",
-    "Who is the wife of John Mayer?",  # niet heel qualified, feel free to add
+    "Who are the members of Metallica?",#Lars Ulrich, Dave Mustaine, Cliff Burton, Robert Trujillo, Jason Newsted, Ron McGovney,Kirk Hammett, James Hetfield, Lloyd Grant
+    "Who is the wife of John Mayer?",  # niet heel qualified, feel free to add | Heeft geen vrouw
 
     # List questions
-    "Name the record labels of John Mayer.",
-    "Name the partners of Bruce Springsteen.",
-    "what are the genres of the White Stripes?",
-    "Who were in Queen?",
-    "Who were the members of The Beatles",
-    "Who are the children of Phill Collins?",
-    "which were the pseudonyms of David Bowie",
+    "Name the record labels of John Mayer.", #Hij heeft geen vrouw
+    "Name the partners of Bruce Springsteen.", #Patti Scialfa, Julianne Phillips
+    "what are the genres of the White Stripes?", #Alternative rock, blues rock, garage rock, post-punk revival, punk blues. 
+    "Who were in Queen?", #Freddie Mercury, Brian May, Roger Taylor, John Deacon | Werkt nog niet!
+    "Who were the members of The Beatles", #John Lennon, Paul McCartney, Ringo Starr, George Harrison
+    "Who are the children of Phill Collins?", #Lily Collins, Joely Collins
+    "which were the pseudonyms of David Bowie", #Ziggy Stardust, Thin White Duke, David Bowie
 
     # Rewritten What-questions
-    "Where is the birthplace of Bob Marley?",
-    "Where was the origin of Coldplay?",
-    "When is the deathdate of John Lennon?",
-    "When was Jimi Hendrix born?",
-    "When did Prince die?",
-    "How did Michael Jackson die?",  # meerdere oorzaken
-    "How did Tupac Shakur die?",  # een oorzaak
-    "what is Lady Gaga's birth name?",
-    "Which country is Queen from?",  # nog steeds queen als in monarch
-    "What year was the song ’1999’ by Prince published?",  # Did prints 1999-01-01T00:00:00Z
-    "For what genre are music duo The Upbeats best known?",
-    "What does EDM stand for?",  # definition
-    "What is a kazoo?",  # definition
-    "How long is Bohemian Rhapsody?",
+    "Where is the birthplace of Bob Marley?", #Nine Mile
+    "Where was the origin of Coldplay?", #London
+    "When is the deathdate of John Lennon?", #8 December 1980
+    "When was Jimi Hendrix born?", #27 November 1942
+    "When did Prince die?", #21 April 2016
+    "How did Michael Jackson die?",  # combined drug intoxication, myocardial infarction
+    "How did Tupac Shakur die?",  # Drive-by shoorting
+    "what is the birth name of Lady Gaga?", #Stefani Joanne Angelina Germanotta
+    "Which country is Queen from?",  # nog steeds queen als in monarch | United Kingdom
+    "What year was the song ’1999’ by Prince published?",  # Did prints 1999-01-01T00:00:00Z | 27 October 1982 | Werkt nog niet 
+    "What is the genre of ABBA?", #pop music, glam rock, dance music, pop rock, Europop, Euro disco
+    "What does EDM stand for?",  # definition | werkt nog niet 
+    "What is a kazoo?",  # definition | American musical instrument | werkt niet
+    "How long is Bohemian Rhapsody?",  # werkt, maar wel alleen met vraagteken!!!
     "How old is The Dark Side Of The Moon?",
     "How long is The Dark Side Of The Moon?",
 
@@ -141,10 +140,6 @@ def is_dead(entity, is_yes_no):
                        params={'query': query, 'format': 'json'}).json()
 
     print(entity)
-    if not death_date['results']['bindings']:
-        print("not dead")
-        return False, 0, 0, 0
-
     for item in death_date['results']['bindings']:
         for var in item:
             date_end = datetime.strptime(item[var]['value'], '%Y-%m-%dT%H:%M:%SZ')
@@ -155,7 +150,7 @@ def is_dead(entity, is_yes_no):
             death = True
     if is_yes_no:
         print(death)
-        return death, 0, 0, 0
+        return death
     else:
         return death, year_of_death, month_of_death, date_of_death
 
@@ -419,7 +414,7 @@ def create_and_fire_query(line):
         if i == 0:
             # print("ent_name text ", ent_name.text, "dep: ", ent_name.dep_)
             if ent_name.label_ != 'LOC':
-                entity_name = ent_name.lemma_.replace("'s", "").replace("'", "")
+                entity_name = ent_name.lemma_
                 entity_tag = find_tag(entity_name, ENTITY, FIRST_TRY, is_age, '', is_location)
                 print('Found slow entity in parse.ents. Entity_tag: -' + str(entity_name) + '- entity: -' + str(
                     entity_tag) + "-")
@@ -428,7 +423,7 @@ def create_and_fire_query(line):
 
         # Try finding a second standard entity here
         else:
-            entity_name2 = ent_name.lemma_.replace("'s", "").replace("'", "")
+            entity_name2 = ent_name.lemma_
             entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '', is_location)
             print('Found slow entity2 in parse.ents. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(entity_tag2) + "-")
             if is_yes_no:
@@ -439,7 +434,7 @@ def create_and_fire_query(line):
             # Seems dangerous to look for pobj here because you're most often looking for the subject of the sentence?
             if ent_name.pos_ == 'PROPN' or ent_name.dep_ == 'pobj' or ent_name.dep_ == 'nsubj':
                 # IF compound !!!
-                entity_name = ent_name.lemma_.replace("'s", "").replace("'", "")
+                entity_name = ent_name.lemma_
                 entity_tag = find_tag(entity_name, ENTITY, FIRST_TRY, is_age, '', is_location)
                 print('Found slow entity as proper noun or pobj. Query_ent: -' + str(entity_name) + '- entity: -' + str(entity_tag) + "-")
 
@@ -484,8 +479,8 @@ def create_and_fire_query(line):
 
     if not found_result:
         '''QUICK FIND'''
-        # if not entity_name:
-        ent_name = ""
+        if not entity_name:
+            ent_name = ""
         prop_name = ""
 
         for token in parse:
@@ -509,42 +504,47 @@ def create_and_fire_query(line):
                         prop_name = prop_name + " of "
 
             elif token.dep_ == "ROOT" or token.dep_ == "advcl":
-                if  (token.lemma_ in roots):
-                    prop_name = prop_name + roots[token.lemma_]
-                    print(
-                        "Property: -" + prop_name + "- ROOT or adverbial clause modifier (advcl). It's birth, death, origin or formation")
-                else:
-                    print("token lemma "+token.lemma_+" not in roots")
+
+                if token.text == "born":
+                    prop_name = prop_name + "birth"
+                elif token.lemma_ == "die":
+                    prop_name = prop_name + "death"
+                elif token.lemma_ == "come":
+                    prop_name = prop_name + "origin"
+                elif token.lemma_ == "form":
+                    prop_name = prop_name + "formation"
+                print("Property: -" + prop_name + "- ROOT or adverbial clause modifier (advcl). It's birth, death, origin or formation")
 
             elif token.tag_ in noun_tags:
                 # If P is in the token tag, then its token text is an entity
-                # print((not prop_name) + "=propname, "+token.head.lemma_+"=headlemma")
                 if not "P" in token.tag_:
                     if prop_name in things_of.values():
                         prop_name = prop_name + " of " + token.lemma_
                         print("Property: -" + prop_name + "- P is not in token tag. In things_of found")
                     elif token.dep_ != "pobj":
                         prop_name = prop_name + replace(token.lemma_)
+                        # BUG: Queen werkt niet
                     else:
-                        # if not entity_name:
+                        if not entity_name:
+                            ent_name = ent_name + token.text + " "
+                            print("Entity: -" + ent_name + "- P is not in token tag and prop is not in things_of.")
+                            if not prop_name and token.head.lemma_ == "in":
+                                print("who are in?")
+                                prop_name = "has part"
+
+                else:
+                    # Adds every entity in the phrase together
+                    if not entity_name:
                         ent_name = ent_name + token.text + " "
-                        print("Entity: -" + ent_name + "- P is not in token tag and prop is not in things_of.")
+                        print("Entity: -" + ent_name + "- P is in token tag")
                         if not prop_name and token.head.lemma_ == "in":
                             print("who are in?")
                             prop_name = "has part"
 
-                else:
-                    # Adds every entity in the phrase together
-                    # if not entity_name:
-                    ent_name = ent_name + token.text + " "
-                    print("Entity: -" + ent_name + "- P is in token tag")
-                    if not prop_name and token.head.lemma_ == "in":
-                        print("who are in?")
-                        prop_name = "has part"
-
         # If quick find found a property and an entity, Try to print an answer
-        # if entity_name:
-        #     ent_name = entity_name
+
+        if entity_name:
+            ent_name = entity_name
 
         print(prop_name, "ent =", ent_name)
         if prop_name != "":
