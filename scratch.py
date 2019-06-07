@@ -37,7 +37,9 @@ import sys
 # What is the gender of Sting
 
 nlp = spacy.load('en')
-result = nlp("Is Amsterdam the capital of the Netherlands?")
+<<<<<<< HEAD
+result = nlp("Who are in Nirvana?")
+'''
 for w in result:
     print("{} {} {}".format(w.lemma_, w.dep_, w.head.lemma_))
 for w in result:
@@ -47,6 +49,7 @@ for w in result:
 for ent in result.ents:
     print("hi")
     print(ent.lemma_, ent.label_)
+
 for w in result:
     if w.dep_ == "nsubj":
         subject=[]
@@ -58,10 +61,30 @@ for token in result:
     if token.dep_ == 'compound' and token.tag_ == 'NN':
         property = " ".join((token.lemma_, token.head.lemma_))
         print(property)
-
+'''
 
 for q in sys.stdin :
     parse = nlp(q.strip())
     for token in parse:
         print("\t".join((token.text, token.lemma_, token.pos_, token.tag_, token.dep_, token.head.lemma_)))
 
+    # death = False
+    # query = '''
+    #         SELECT ?property WHERE {
+    #             wd:%s wdt:%s ?prop.
+    #             SERVICE wikibase:label {
+    #                 bd:serviceParam wikibase:language "en".
+    #                 ?prop rdfs:label ?property
+    #             }
+    #         }''' % (entity, "P570")  # P570 = date of death
+    # death_date = requests.get(sparql_url,
+    #                    params={'query': query, 'format': 'json'}).json()
+    #
+    # for item in death_date['results']['bindings']:
+    #     for var in item:
+    #         date_end = datetime.strptime(item[var]['value'], '%Y-%m-%dT%H:%M:%SZ')
+    #
+    #         year_of_death = int(str(date_end.strftime("%Y")), 10)
+    #         month_of_death = int(str(date_end.strftime("%m")), 10)
+    #         date_of_death = int(str(date_end.strftime("%d")), 10)
+    #         death = True
