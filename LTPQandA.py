@@ -123,7 +123,7 @@ def print_example_queries():
         print("(" + str(index + 1) + ") " + example)
         create_and_fire_query(example)
     # Op dit moment vindt quick find 24 and slow find 11 antwoorden
-    print("quick finds = " + str(quick_find) + " slow finds = " + str(slow_find) + " not founds = " + str(not_found))
+    print("Quick finds = " + str(quick_find) + " Slow finds = " + str(slow_find) + " Not founds = " + str(not_found))
     print(user_msg)
 
 def is_dead(entity, is_yes_no):
@@ -151,8 +151,11 @@ def is_dead(entity, is_yes_no):
     if is_yes_no:
         print(death)
         return death
-    else:
-        return death, year_of_death, month_of_death, date_of_death
+    else:  # DOES THIS NOT FAIL WHEN NO DEATH IS FOUND?
+        if death:
+            return death, year_of_death, month_of_death, date_of_death
+        else:
+            return death, 0, 0, 0
 
 
 def find_age(entity, date_begin):
@@ -385,13 +388,8 @@ def yes_no_query(entity, entity2, entity_name2):
 def create_and_fire_query(line):
     nlp = spacy.load('en')
     parse = nlp(line.strip())
-    entity_name = 'None'
-    entity_tag = 'None'
-    found_result = False
-    is_count = False
-    is_age = False
-    is_location = False
-    is_yes_no = False
+    entity_name = entity_tag = 'None'
+    found_result = is_count = is_age = is_location = is_yes_no = False
 
     '''YES/NO QUESTIONS'''
     # If the first word is a form of to be or to do it is a Yes/No question
@@ -403,9 +401,10 @@ def create_and_fire_query(line):
             entity_tag2 = 'None'
 
     for token in parse:
-        if token.text == "age" or token.text == "old":
+        if token.text == "age" or token.text == "old":  # if the question contains age or old, the user request an age
+            print("AGE QUESTION")
             is_age = True
-        if token.text == "Where":
+        if token.text == "Where":  # sentences starting with where are about locations
             is_location = True
 
     '''Look for entity'''
@@ -439,42 +438,44 @@ def create_and_fire_query(line):
                 print('Found slow entity as proper noun or pobj. Query_ent: -' + str(entity_name) + '- entity: -' + str(entity_tag) + "-")
 
     if is_yes_no and not found_result:
-        # The loop always continues until the last word in the senetence, which is nice since English (yes/no) is structured according to Subject Verb Object, and we need object
-        for ent_name2 in parse:
-            if ent_name2.dep_ == 'compound' or ent_name2.dep_ == 'amod':
-                entity_name2 = " ".join((ent_name2.lemma_, ent_name2.head.lemma_))
-                if entity_name == entity_name2:
+        # The loop always continues until the last word in the sentence, which is nice, since English (yes/no) is structured according to Subject Verb Object, and we need object
+        for word in parse:
+            if word.dep_ == 'compound' or word.dep_ == 'amod':
+                entity_name2 = " ".join((word.lemma_, word.head.lemma_))
+                if entity_name == entity_name2:  # When the entity found is the same as entity 1, go to next word
                     continue
                 entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '', is_location)
-                print('Found slow entity3 in parse. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(entity_tag2) + "-")
+                print('Found slow entity3 in parse. Entity_name2: -' + str(entity_name2) + '- entity_tag2: -' + str(entity_tag2) + "-")
                 if entity_tag2 == 'empty':
                     continue
                 else:
                     break
 
-            if ent_name2.dep_ == 'attr' or ent_name2.dep_ == 'npadvmod' or ent_name2.dep_ == 'dobj' \
-                    or ent_name2.dep_ == 'pobj' or ent_name2.dep_ == 'ROOT' or ent_name2.dep_ == 'nsubj':
-                entity_name2 = ent_name2.lemma_
+            if word.dep_ == 'attr' or word.dep_ == 'npadvmod' or word.dep_ == 'dobj' \
+                    or word.dep_ == 'pobj' or word.dep_ == 'ROOT' or word.dep_ == 'nsubj':
+                entity_name2 = word.lemma_
                 if entity_name == entity_name2 or entity_name2 == 'be':  # If it found the same name find another one or it's a ROOT 'be'
                     continue
                 entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '', is_location)
                 print('Found slow entity4 in parse. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(
                     entity_tag2) + "-")
                 # if subject of the sentence if found, switch subject and object around and the found string is not a substring of the first entity (because substrings are different, but sometimes classified as nsubj
-                if ent_name2.dep_ == 'nsubj' and entity_name2 not in entity_name2:
-                    print("switcher")
-                    switcher = entity_tag
-                    entity_tag = entity_tag2
-                    entity_tag2 = switcher
-                    switcher = entity_name
-                    entity_name = entity_name2
-                    entity_name2 = switcher
+                if word.dep_ == 'nsubj' and entity_name2 not in entity_name2:
+                    print("swapper")  # This is shorter, but needs to be tested to be sure
+                    entity_tag, entity_tag2 = entity_tag2, entity_tag
+                    entity_name, entity_name2 = entity_name2, entity_name
+                    # switcher = entity_tag
+                    # entity_tag = entity_tag2
+                    # entity_tag2 = switcher
+                    # switcher = entity_name
+                    # entity_name = entity_name2
+                    # entity_name2 = switcher
                 if entity_tag2 == 'empty':
                     continue
                 # else:  # probably better to not break here since this finds things like 'make' as well as normal entities
                 #     break
 
-        if entity_tag2 != 'None':  # if entity 2 is not empty
+        if entity_tag2 != 'None':  # if entity 2 is not empty find a yes/no answer
             found_result = answer_yes_no(parse, entity_tag, entity_name, is_yes_no, found_result, entity_tag2, entity_name2)
 
     if not found_result:
@@ -541,17 +542,17 @@ def create_and_fire_query(line):
                             print("who are in?")
                             prop_name = "has part"
 
-        # If quick find found a property and an entity, Try to print an answer
-
-        if entity_name:
+        if entity_name:  # WHY ALWAYS USE THE ENTITY FOUND FIRST? DOES PROGRAM EVER NOT FIND entity_name?
             ent_name = entity_name
 
         print(prop_name, "ent =", ent_name)
-        if prop_name != "":
+        if prop_name != "":  # If quick find found a property and an entity, Try to print an answer
             if not ent_name:
                 ent_name = entity_name
             print("now " + prop_name, "ent =", ent_name)
             ent_tag = find_tag(ent_name, ENTITY, FIRST_TRY, is_age, '', is_location)
+            # WE CAN JUST USE find_answer FUNCTION HERE (for now it's easier to bug fix and leave it like this) i.e.
+            # prop_tag, found_result = find_answer(prop_name, ent_name, ent_tag, is_count, is_age, is_location)
             prop_tag = find_tag(prop_name, PROPERTY, FIRST_TRY, is_age, ent_tag, is_location)
             found_result = print_answer(prop_tag, ent_tag, is_count, is_age)
             print("   QUICK FIND FOUND entity: -" + ent_tag + " " + ent_name + "- and property: -" + prop_tag + " " + prop_name + "-")
@@ -577,7 +578,6 @@ def create_and_fire_query(line):
 
             # If the property consists of multiple words join them together
             if not found_result:
-
                 if (prop_name.dep_ == 'compound' and prop_name.tag_ == 'NN') or \
                         (prop_name.pos_ == 'ADJ' and prop_name.dep_ == 'amod'):
                     # Dit verandert naar prop.text ipv prop,lemma_ omdat je het volledige bijv naamwoord wilt (e.g. highest note)
@@ -596,7 +596,7 @@ def create_and_fire_query(line):
 
                 if prop_name.dep_ == 'ROOT' and not found_result:
                     property_name = replace(prop_name.head.lemma_)
-                    # If the root is 'to be' don't look up property (irrelevant to do, and erroneous results)
+                    # If the root is 'to be' don't look up property (irrelevant to do, and gives erroneous results)
                     if not property_name == 'be':
                         print("Trying property: -" + property_name + "-, as root (a word that means something)")
 
@@ -605,8 +605,6 @@ def create_and_fire_query(line):
                     if not found_result:  # If you don't find a result don't try again with the same name
                         property_name = ""
                     print("Tag: " + property_tag)
-
-
 
         '''Print how the program did'''
         if not found_result and line:  # and line means the line is not empty
@@ -622,6 +620,8 @@ def create_and_fire_query(line):
             print("Slow find count = " + str(slow_find))
 
 
+'''This function finds a property tag, tries to print the answer of the query and tries disambiguation if it didn't 
+   find and answer. Then it return the tag and whether it found a result'''
 def find_answer(property_name, entity_name, entity_tag, is_count, is_age, is_location):
     property_tag = find_tag(property_name, PROPERTY, FIRST_TRY, is_age, entity_tag, is_location)
     found_result = print_answer(property_tag, entity_tag, is_count, is_age)
@@ -679,7 +679,7 @@ def compare_answer(prop_tag, entity_tag, entity_name2):
             return EMPTY
         for item in data['results']['bindings']:
             for var in item:
-                print("found answer: " + item[var]['value'] + " in text answer was: " + entity_name2)
+                print("found answer: " + item[var]['value'] + ". In text answer was: " + entity_name2)
                 if str(item[var]['value']) == entity_name2:
                     return True
                 else:
@@ -690,9 +690,7 @@ def main(argv):
     global quick_find
     global slow_find
     global not_found
-    quick_find = 0
-    slow_find = 0
-    not_found = 0
+    quick_find = slow_find = not_found = 0
     # print_example_queries()
     print(user_msg)
     for line in sys.stdin:
