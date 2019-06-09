@@ -64,6 +64,7 @@ for token in result:
 
 for q in sys.stdin :
     parse = nlp(q.strip())
+    # print("Minus of: " + (q-"of"))
     for token in parse:
         print("\t".join((token.text, token.lemma_, token.pos_, token.tag_, token.dep_, token.head.lemma_)))
 

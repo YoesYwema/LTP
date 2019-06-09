@@ -19,9 +19,31 @@ global not_found
 
 noun_tags = ["NN", "NNS", "NNP", "NNPS"]
 things_of = {"When": "date", "Where": "place", "many": "number", "long": "duration", "old":"age", "How": "cause"}
-replacements = {"city":"place", "real":"birth",  "member":"has part", "members":"has part", "because":"cause", "P3283":"P463","P1559":"P1477","P436":"P361"}
+replacements = {"city":"place", "real":"birth",  "member":"has part", "members":"has part", "because":"cause", "P3283":"P463","P1448":"P1477","P436":"P361"}
 roots = {"bear":"birth", "die":"death", "come":"origin", "form":"formation"}
 date_props = ['P569', 'P570', 'P571', 'P576', 'P577', 'P1191']
+location_words = ["Where", "city", "place", "country", "location"]
+
+questions_nog_niet_goed_9_jun = [
+    "Name the record labels of John Mayer.",
+    "Which country is Queen from?",  # nog steeds queen als in monarch | United Kingdom
+    "Who are the members of Metallica?",#Niet het qualified antwoord!
+    "In what year was Die Antwoord formed?",  # geeft 1 January  2008, de publication date van een album What Year Will You Have The World?
+    "In what year did Prince die",  # geeft 1 January 2008, de publication date van een album What Year Will You Have The World?
+    "What year was the song ’1999’ by Prince published?",  # Did prints 1999-01-01T00:00:00Z | 27 October 1982 | Werkt nog niet
+    "What does EDM stand for?",  # definition | werkt nog niet
+    "What is a kazoo?",  # definition | American musical instrument | werkt niet
+    "Did Louis Armstrong influence the Beatles?",  # PROPN + PROPN dobj | NOT DEFINED
+    "Was Eminem born in St. Joseph?", # werkt niet | correct answer: Yes
+    "Was ABBA formed in 1989?", # goed antwoord maar niet goede manier
+    "Was ABBA formed in 1972?" #verkeerd antwoord
+    "Is deadmau5 only a composer?",  # PROPN + NOUN attr  (IT ANSWERS CORRECTLY BUT DUNNO WHY HAHA)
+    "Did Michael Jackson play in a band?",  # PROPN + NOUN pobj (DOESNT WORK SINCE BAND IS THE MEMBER OF PROPERTY!!!) Replace? Geeft No | correct answer: Yes
+    "Do The Fall make indie rock?", # was gegeven door lecturer als The Fals, maar die bestaat niet? Niet in de eerste 250 entries op wikidata iig
+    "Do The Fall make punk rock?" , # ziet The Fall als Fall = herfst\
+    "Did Michael Jackson play in the Jackson 5?", # Only works with Five | geeft wel Yes
+    "Did Prince die?",  # PROPN + VERB ROOT USe is death    #geeft goede antwoord, maar Prince entity verkeerd...
+]
 
 example_queries = [
     # What-questions
@@ -47,7 +69,7 @@ example_queries = [
     "Name the record labels of John Mayer.", # zoekt naar name; "record label" werkt bij The Clash wel
     "Name the partners of Bruce Springsteen.", #Patti Scialfa, Julianne Phillips | zoekt niet naar name
     "what are the genres of the White Stripes?", #Alternative rock, blues rock, garage rock, post-punk revival, punk blues. 
-    "Who were in Queen?", #Freddie Mercury, Brian May, Roger Taylor, John Deacon | Werkt nog niet, door queen
+    "Who were in Queen?", #Freddie Mercury, Brian May, Roger Taylor, John Deacon | werkt, maar parafrase waarschijnlijk niet
     "Who were the members of The Beatles", #John Lennon, Paul McCartney, Ringo Starr, George Harrison
     "Who are the children of Phill Collins?", #Lily Collins, Joely Collins
     "which were the pseudonyms of David Bowie", #Ziggy Stardust, Thin White Duke, David Bowie
@@ -56,6 +78,7 @@ example_queries = [
     "Where is the birthplace of Bob Marley?", #Nine Mile
     "Where was the origin of Coldplay?", #London
     "When is the deathdate of John Lennon?", #8 December 1980
+    "When is the date of death of John Lennon?", #8 December 1980
     "When was Jimi Hendrix born?", #27 November 1942
     "When did Prince die?", #21 April 2016
     "How did Michael Jackson die?",  # combined drug intoxication, myocardial infarction
@@ -68,44 +91,49 @@ example_queries = [
     "What is a kazoo?",  # definition | American musical instrument | werkt niet
     "How long is Bohemian Rhapsody?", #134 seconds
     "How old is The Dark Side Of The Moon?", #43 years old
-    "How long is The Dark Side Of The Moon?", #
+    "How long is The Dark Side Of The Moon?", #2579 seconds
 
     # in what city/country/place/year/band
-    "In what city was Die Antwoord formed?",  # geeft nog steeds alleen land!
-    "In what city was Eminem born",  # werkt
-    "In what year was Die Antwoord formed?",  # geeft 1 January
-    "In what year did Prince die",  # geeft 1 January
+    "In what city was Die Antwoord formed?", # Cape Town
+    "In what city was Eminem born",  # St. Joseph
+    "In what year was Die Antwoord formed?",  # geeft 1 January  2008, de publication date van een album What Year Will You Have The World?
+    "In what year did Prince die",  # geeft 1 January 2008, de publication date van een album What Year Will You Have The World?
 
     # count questions
-    "How many members does Nirvana have?", #
-    "How many children does Adele have?",  # defined
+    "How many members does Nirvana have?", #werkt nog niet in quick find, wel in slow find
+    "How many children does Adele have?",  # defined | werkt nog niet in quickfind, wel slow find
     "How many strings does a violin usually have?", #DOES NOT WORK AT ALL (ws niet gevraagd)
     # feel free to add
 
     # age questions (eerste drie werken)
-    "How old was Ella Fitzgerald when she died?",
-    "How old is Eminem?",  # also qualified
-    "What is the age of Eminem",  # also qualified
+    "How old was Ella Fitzgerald when she died?", #79 years old
+    "How old is Eminem?",  # also qualified | 46 years old
+    "What is the age of Eminem",  # also qualified | 46 years old
 
     # yes/no questions
-    "Is Michael Jackson dead?"
-    "Does Michael Jackson still live?"
-    "Is Michael Jackson alive?"
-    "Has Michael Jackson died?"
-    "Did Prince die?",  # PROPN + VERB ROOT USe is death    #geeft verkeerde antwoord! Want Prince entity verkeerd...
-    "Did Michael Jackson play in the Jackson 5?", # Only works with Five
-    "Did Michael Jackson play in the Jackson Five?",
-    "Did Michael Jackson play in a band?"  # PROPN + NOUN pobj (DOESNT WORK SINCE BAND IS THE MEMBER OF PROPERTY!!!) Replace?
-    "Do The Fals make indie rock?",
-    # NOUN nsubj + NN amod (" ".join((ent_name2.lemma_, ent_name2.head.lemma_))) THE FALS ARE NOT EASILY FOUND IN WIKIDATA (LIKE THE 100th ENTITY)
-    "Does GreenDay make alternative rock?"  # NOUN nsubj + NN amod
-    "Is Michael Jackson male?",  # PROPN + NN attr
-    "Is Miley Cyrus the daughter of Billy Ray Cyrus?",  # PROPN + compound PROPN (only last word cyrus is pobj)
-    "Is Miley Cyrus the father of Billy Ray Cyrus?",
-    "Does deadmau5 make house music?",  # NOUN + NOUN compound (" ".join((ent_name2.lemma_, ent_name2.head.lemma_)))
-    "Does Felix Jaehn come from Hamburg?",  # PROPN + PROPN npadvmod
+    "Is Michael Jackson dead?", #yes
+    "Does Michael Jackson still live?", #no
+    "Is Michael Jackson alive?", #no
+    "Has Michael Jackson died?", #yes
+    "Did Prince die?",  # PROPN + VERB ROOT USe is death    #geeft goede antwoord, maar Prince entity verkeerd...
+    "Did Michael Jackson play in the Jackson 5?", # Only works with Five | geeft wel Yes
+    "Did Michael Jackson play in the Jackson Five?", #Yes
+    "Did Michael Jackson play in a band?",  # PROPN + NOUN pobj (DOESNT WORK SINCE BAND IS THE MEMBER OF PROPERTY!!!) Replace? Geeft No | correct answer: Yes
+    "Do The Fall make indie rock?", # was gegeven door lecturer als The Fals, maar die bestaat niet? Niet in de eerste 250 entries op wikidata iig
+    "Do The Fall make punk rock?" , # ziet The Fall als Fall = herfst
+    "Does Green Day make alternative rock?",  # NOUN nsubj + NN amod # Yes
+    "Is Michael Jackson male?",  # PROPN + NN attr # Yes
+    "Is Miley Cyrus the daughter of Billy Ray Cyrus?",  # PROPN + compound PROPN (only last word cyrus is pobj) | Yes
+    "Is Miley Cyrus the father of Billy Ray Cyrus?", # No
+    "Does deadmau5 make house music?",  # NOUN + NOUN compound (" ".join((ent_name2.lemma_, ent_name2.head.lemma_))) | Yes
+    "Does Felix Jaehn come from Hamburg?",  # PROPN + PROPN npadvmod | Yes
+    "Does Felix Jaehn come from Berlin?",  # PROPN + PROPN npadvmod | No
     "Is deadmau5 only a composer?",  # PROPN + NOUN attr  (IT ANSWERS CORRECTLY BUT DUNNO WHY HAHA)
-    "Did Louis Armstrong influence the Beatles?",  # PROPN + PROPN dobj
+    "Is deadmau5 a composer?",  # Yes | werkt
+    "Did Louis Armstrong influence the Beatles?",  # PROPN + PROPN dobj | NOT DEFINED
+    "Was Eminem born in St. Joseph?", # werkt niet | correct answer: Yes
+    "Was ABBA formed in 1989?", # goed antwoord maar niet goede manier
+    "Was ABBA formed in 1972?" #verkeerd antwoord
 ]
 
 # questions to test extra things on
@@ -122,10 +150,10 @@ user_msg = "Please enter a question or quit program by pressing control-D."
 def print_example_queries():
     for index, example in enumerate(example_queries):
         print("(" + str(index + 1) + ") " + example)
-        # create_and_fire_query(example)
-    # Op dit moment vindt quick find 24 and slow find 11 antwoorden
+        create_and_fire_query(example)
+    # Op dit moment vindt quick find 35 and slow find 8 antwoorden, 4 antwoorden niet gevonden
+    # Niet al deze antwoorden zijn correct!
     print("Quick finds = " + str(quick_find) + " Slow finds = " + str(slow_find) + " Not founds = " + str(not_found))
-    print(user_msg)
 
 def is_dead(entity, is_yes_no):
     death = False
@@ -168,7 +196,7 @@ def find_age(entity, date_begin):
     month_of_birth = int(str(date_begin.strftime("%m")), 10)
     date_of_birth = int(str(date_begin.strftime("%d")), 10)
 
-    print("   ANSWER: ", end='')
+    print("\t\t\t\t\t\t\t\t\t   ANSWER: ", end='')
     if not death:
         dot = datetime.today()
         year_today = int(str(dot.strftime("%Y")), 10)
@@ -226,19 +254,19 @@ def print_answer(property, entity, is_count, is_age):
     for item in data['results']['bindings']:
         for var in item:
             if property == 'P2047':  # = Duration
-                print("   ANSWER: " + item[var]['value'] + " seconds")
+                print("\t\t\t\t\t\t\t\t\t   ANSWER: " + item[var]['value'] + " seconds")
             else:
                 if date:
                     date = datetime.strptime(item[var]['value'], '%Y-%m-%dT%H:%M:%SZ')
                     if is_age:
                         find_age(entity, date)
                     else:
-                        print("   ANSWER: " + str(date.day), str(date.strftime("%B")), str(date.year))
+                        print(" \t\t\t\t\t\t\t\t\t  ANSWER: " + str(date.day), str(date.strftime("%B")), str(date.year))
                 if not date:
                     # Only print counts higher than 0 (else it didn't find one and the list is empty)
                     if is_count and item[var]['value'] == '0':
                         return False
-                    print("   ANSWER: " + item[var]['value'])
+                    print(" \t\t\t\t\t\t\t\t\t  ANSWER: " + item[var]['value'])
     return True
 
 
@@ -331,22 +359,22 @@ def answer_yes_no(parse, entity_tag, entity_name, is_yes_no, found_result, entit
     if dead_or_alive:
         if dead_or_alive == 'died':
             if is_dead(entity_tag, is_yes_no):
-                print("    ANSWER: Yes")
+                print(" \t\t\t\t\t\t\t\t\t   ANSWER: Yes")
             else:
-                print("    ANSWER: No")
+                print(" \t\t\t\t\t\t\t\t\t   ANSWER: No")
             found_result = True
         if dead_or_alive == 'lives':
             if is_dead(entity_tag, is_yes_no):
-                print("    ANSWER: No")
+                print(" \t\t\t\t\t\t\t\t\t   ANSWER: No")
             else:
-                print("    ANSWER: Yes")
+                print(" \t\t\t\t\t\t\t\t\t   ANSWER: Yes")
             found_result = True
     if not found_result:
         if answer_ent == "Entity_corresponds":
-            print("    ANSWER: Yes")
+            print(" \t\t\t\t\t\t\t\t\t   ANSWER: Yes")
             found_result = True
         if answer_ent == "Entity_different":
-            print("    ANSWER: No")
+            print(" \t\t\t\t\t\t\t\t\t   ANSWER: No")
             found_result = True
         if answer_ent == "No_property_in_sentence":
             found_result = yes_no_query(entity_tag, entity_tag2, entity_name2)
@@ -371,19 +399,19 @@ def yes_no_query(entity, entity2, entity_name2):
     data = requests.get(sparql_url,
                         params={'query': query, 'format': 'json'}).json()
     if data['boolean']:
-        print("    ANSWER: Yes")
+        print(" \t\t\t\t\t\t\t\t\t   ANSWER: Yes")
     else:
         # Try the second best entity
-        entity2 = find_tag(entity_name2, ENTITY, 1, False, '')
+        entity2 = find_tag(entity_name2, ENTITY, 1, False, '', False)
         query = '''
                 ASK WHERE {wd:%s ?prop wd:%s}
                 ''' % (entity, entity2)
         data = requests.get(sparql_url,
                             params={'query': query, 'format': 'json'}).json()
         if data['boolean']:
-            print("    ANSWER: Yes")
+            print(" \t\t\t\t\t\t\t\t\t   ANSWER: Yes")
         else:
-            print("    ANSWER: No")
+            print(" \t\t\t\t\t\t\t\t\t   ANSWER: No")
     return True
 
 
@@ -407,7 +435,7 @@ def create_and_fire_query(line):
         if token.text == "age" or token.text == "old":  # if the question contains age or old, the user request an age
             print("AGE QUESTION")
             is_age = True
-        if token.text == "Where":  # sentences starting with where are about locations
+        if token.text in location_words:  # sentences starting with where are about locations
             is_location = True
 
     '''Look for entity'''
@@ -500,13 +528,13 @@ def create_and_fire_query(line):
                     else:
                         prop_name = prop_name + things_of[token.text]
                         print("Property: -" + prop_name + "- Token text of Adverbial modifier (advmod)")
-                    if token.head.lemma_ != "long" and token.head.lemma_ != "old":
-                        print("Property: " + prop_name + " of- Long Adverbial modifier (advmod)")
-                        prop_name = prop_name + " of "
+                    # if token.head.lemma_ != "long" and token.head.lemma_ != "old":
+                    #     print("Property: " + prop_name + " of- Long Adverbial modifier (advmod)")
+                    #     prop_name = prop_name + " of "
 
             elif token.dep_ == "ROOT" or token.dep_ == "advcl":
                 if (token.lemma_ in roots):
-                    prop_name = prop_name + roots[token.lemma_]
+                    prop_name = prop_name + " of " + roots[token.lemma_]
                     print(
                         "Property: -" + prop_name + "- ROOT or adverbial clause modifier (advcl). It's birth, death, origin or formation")
                 else:
@@ -515,11 +543,12 @@ def create_and_fire_query(line):
             elif token.tag_ in noun_tags:
                 # If P is in the token tag, then its token text is an entity
                 if not "P" in token.tag_:
-                    if prop_name in things_of.values() and prop_name != "duration" and prop_name != "age":
-                        prop_name = prop_name + " of " + token.lemma_
+                    if prop_name in things_of.values() and not token.lemma_ in things_of.values() and prop_name != "duration" and prop_name != "age":
+                        prop_name = prop_name + " of " + replace(token.lemma_)
                         print("Property: -" + prop_name + "- P is not in token tag. In things_of found")
-                    elif token.dep_ != "pobj" and not prop_name:
+                    elif (token.dep_ != "pobj" or "of" in prop_name) and not replace(token.lemma_) in prop_name and prop_name != "duration" and prop_name != "age":
                         prop_name = prop_name + replace(token.lemma_)
+                        print("Property: -" + prop_name + "- Compound property (e.g. highest note)")
                     else:
                         ent_name = ent_name + token.text + " "
                         print("Entity: -" + ent_name + "- P is not in token tag and prop is not in things_of.")
@@ -535,16 +564,19 @@ def create_and_fire_query(line):
                         print("who are in?")
                         prop_name = "has part"
 
+        print(prop_name, "ent =", ent_name)
         if entity_name:
             ent_name = entity_name
         else:
+            # In de meeste gevallen is dit niet nodig, omdat entity method goed gaat.
+            # Bij bijvoorbeeld the Foo Fighters echter geeft de entity method de verkeerde maar wel met een antwoord.
             print("WHY ALWAYS USE THE ENTITY FOUND FIRST? DOES PROGRAM EVER NOT FIND entity_name?")
+        print("now " + prop_name, "ent =", ent_name)
 
-        print(prop_name, "ent =", ent_name)
         if prop_name != "":
             if not ent_name:
                 ent_name = entity_name
-            print("now " + prop_name, "ent =", ent_name)
+            # print("now " + prop_name, "ent =", ent_name)
             ent_tag = find_tag(ent_name, ENTITY, FIRST_TRY, is_age, '', is_location)
             prop_tag = find_tag(prop_name, PROPERTY, FIRST_TRY, is_age, ent_tag, is_location)
             found_result = print_answer(prop_tag, ent_tag, is_count, is_age)
@@ -688,8 +720,8 @@ def main(argv):
     print_example_queries()
     print(user_msg)
     for line in sys.stdin:
-        line = example_queries[int(line)-1].rstrip()
-        # line = line.rstrip()
+        # line = example_queries[int(line)-1].rstrip()
+        line = line.rstrip()
         create_and_fire_query(line)
         print(user_msg)
 
