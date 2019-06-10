@@ -37,7 +37,7 @@ import sys
 # What is the gender of Sting
 
 nlp = spacy.load('en')
-result = nlp("Who are in Nirvana?")
+result = nlp("")
 '''
 for w in result:
     print("{} {} {}".format(w.lemma_, w.dep_, w.head.lemma_))
