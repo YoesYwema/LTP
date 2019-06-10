@@ -37,8 +37,8 @@ import sys
 # What is the gender of Sting
 
 nlp = spacy.load('en')
-result = nlp("")
-'''
+'''result = nlp("Who are in The Beatles?")
+
 for w in result:
     print("{} {} {}".format(w.lemma_, w.dep_, w.head.lemma_))
 for w in result:
@@ -66,7 +66,7 @@ for q in sys.stdin :
     parse = nlp(q.strip())
     # print("Minus of: " + (q-"of"))
     for token in parse:
-        print("\t".join((token.text, token.lemma_, token.pos_, token.tag_, token.dep_, token.head.lemma_)))
+        print("\t".join((token.text, token.lemma_, token.pos_, token.tag_, token.dep_, token.head.lemma_, token.head.text)))
 
     for ent in parse.ents:
         print(ent.lemma_.replace("'s", "").replace("'", ""), ent.label_)
