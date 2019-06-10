@@ -495,7 +495,10 @@ def create_and_fire_query(line):
             # Seems dangerous to look for pobj here because you're most often looking for the subject of the sentence?
             if ent_name.pos_ == 'PROPN' or ent_name.dep_ == 'pobj' or ent_name.dep_ == 'nsubj':
                 # IF compound !!!
-                entity_name = ent_name.lemma_.replace("'s", "").replace("'", "")
+                if ent_name.pos_ == 'PROPN':
+                    entity_name = ent_name.text.replace("'s", "").replace("'", "")
+                else:
+                    entity_name = ent_name.lemma_.replace("'s", "").replace("'", "")
                 entity_tag = find_tag(entity_name, ENTITY, FIRST_TRY, is_age, '', is_location)
                 print('Found slow entity as proper noun or pobj. Query_ent: -' + str(entity_name) + '- entity: -' + str(entity_tag) + "-")
                 #break  TO BREAK OR NOT TO BREAK
@@ -589,7 +592,6 @@ def create_and_fire_query(line):
                         if not prop_name and token.head.lemma_ == "in":
                             print("who are in?")
                             prop_name = "has part"
-
                 else:
                     # Adds every entity in the phrase together
                     ent_name = ent_name + token.text + " "
