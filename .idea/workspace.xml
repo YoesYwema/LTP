@@ -1,7 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
+<<<<<<< HEAD
     <list default="true" id="bb386296-4942-4b8a-90c2-ec372ffaafb5" name="Default" comment="" />
+=======
+    <list default="true" id="bb386296-4942-4b8a-90c2-ec372ffaafb5" name="Default" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LTPQandA.py" beforeDir="false" afterPath="$PROJECT_DIR$/LTPQandA.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scratch.py" beforeDir="false" afterPath="$PROJECT_DIR$/scratch.py" afterDir="false" />
+    </list>
+    <ignored path="$PROJECT_DIR$/venv/" />
+>>>>>>> a5ebf27186b7ced0b8ec797b5c3b6569314ba0aa
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -13,11 +22,16 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/LTPQandA.py">
           <provider selected="true" editor-type-id="text-editor">
+<<<<<<< HEAD
             <state relative-caret-position="210">
               <caret line="644" column="71" lean-forward="true" selection-start-line="644" selection-start-column="71" selection-end-line="644" selection-end-column="71" />
               <folding>
                 <element signature="e#20#30#0" expanded="true" />
               </folding>
+=======
+            <state relative-caret-position="1170">
+              <caret line="153" column="39" selection-start-line="153" selection-start-column="39" selection-end-line="153" selection-end-column="39" />
+>>>>>>> a5ebf27186b7ced0b8ec797b5c3b6569314ba0aa
             </state>
           </provider>
         </entry>
@@ -25,8 +39,13 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/scratch.py">
           <provider selected="true" editor-type-id="text-editor">
+<<<<<<< HEAD
             <state relative-caret-position="551">
               <caret line="86" column="26" selection-start-line="86" selection-start-column="26" selection-end-line="86" selection-end-column="26" />
+=======
+            <state relative-caret-position="303">
+              <caret line="68" column="107" selection-start-line="68" selection-start-column="107" selection-end-line="68" selection-end-column="107" />
+>>>>>>> a5ebf27186b7ced0b8ec797b5c3b6569314ba0aa
               <folding>
                 <element signature="e#0#12#0" expanded="true" />
               </folding>
@@ -36,27 +55,19 @@
       </file>
     </leaf>
   </component>
-  <component name="FileTemplateManagerImpl">
-    <option name="RECENT_TEMPLATES">
-      <list>
-        <option value="Python Script" />
-      </list>
-    </option>
-  </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>find_answer</find>
-      <find>find_tag(p</find>
-      <find>hi!</find>
-      <find>in text</find>
-      <find>text:</find>
-      <find>empty</find>
-      <find>died</find>
-      <find>die</find>
-      <find>is_lo</find>
-      <find>is_age</find>
-      <find>try_d</find>
-      <find>where&quot;</find>
+      <find>False</find>
+      <find>if is_yes</find>
+      <find>entity_name</find>
+      <find>is_location</find>
+      <find>instance</find>
+      <find>yes_no_query</find>
+      <find>print_example_queries</find>
+      <find>things_of</find>
+      <find>answer</find>
+      <find>quick</find>
+      <find>quick_</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -97,8 +108,6 @@
   </component>
   <component name="PropertiesComponent">
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -112,65 +121,27 @@
       </list>
     </option>
   </component>
-  <component name="RunManager">
-    <configuration name="LTPQandA" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <module name="LTP" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/LTPQandA.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <recent_temporary>
-      <list>
-        <item itemvalue="Python.LTPQandA" />
-      </list>
-    </recent_temporary>
-  </component>
   <component name="SvnConfiguration">
     <configuration />
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="bb386296-4942-4b8a-90c2-ec372ffaafb5" name="Default" comment="" />
-      <created>1559228524068</created>
+      <created>1560031458589</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1559228524068</updated>
+      <updated>1560031458589</updated>
     </task>
     <servers />
-  </component>
-  <component name="TodoView">
-    <todo-panel id="selected-file">
-      <is-autoscroll-to-source value="true" />
-    </todo-panel>
-    <todo-panel id="all">
-      <are-packages-shown value="true" />
-      <is-autoscroll-to-source value="true" />
-    </todo-panel>
   </component>
   <component name="ToolWindowManager">
     <frame x="-1" y="24" width="1682" height="1027" extended-state="6" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.051901028" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.10279389" />
       <window_info id="Structure" order="1" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
-      <window_info anchor="bottom" id="Find" order="1" weight="0.49625668" />
-      <window_info anchor="bottom" id="Run" order="2" weight="0.2342246" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.58181816" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.26524064" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -178,39 +149,72 @@
       <window_info anchor="bottom" id="Version Control" order="7" weight="0.32899022" />
       <window_info anchor="bottom" id="Event Log" order="8" side_tool="true" />
       <window_info anchor="bottom" id="Python Console" order="9" weight="0.32899022" />
+<<<<<<< HEAD
       <window_info active="true" anchor="bottom" id="Terminal" order="10" visible="true" weight="0.3030303" />
+=======
+      <window_info active="true" anchor="bottom" id="Terminal" order="10" visible="true" weight="0.25989306" />
+>>>>>>> a5ebf27186b7ced0b8ec797b5c3b6569314ba0aa
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="right" id="Data View" order="3" />
     </layout>
+    <layout-to-restore>
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.10279389" />
+      <window_info id="Structure" order="1" weight="0.25" />
+      <window_info id="Favorites" order="2" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.19652551" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.26524064" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" weight="0.32899022" />
+      <window_info anchor="bottom" id="Version Control" order="7" weight="0.32899022" />
+      <window_info anchor="bottom" id="Event Log" order="8" side_tool="true" />
+      <window_info anchor="bottom" id="Python Console" order="9" weight="0.32899022" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="10" visible="true" weight="0.18716578" />
+      <window_info anchor="right" id="Commander" order="0" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="Data View" order="3" />
+    </layout-to-restore>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file:///usr/lib/python3.5/json/decoder.py">
+    <entry file="file://$PROJECT_DIR$/LTP.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="454">
-          <caret line="356" selection-start-line="356" selection-end-line="356" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Downloads/nqueens.py" />
-    <entry file="file://$PROJECT_DIR$/LTPQandA.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="210">
-          <caret line="644" column="71" lean-forward="true" selection-start-line="644" selection-start-column="71" selection-end-line="644" selection-end-column="71" />
-          <folding>
-            <element signature="e#20#30#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="135">
+          <caret line="160" column="12" selection-start-line="160" selection-start-column="12" selection-end-line="160" selection-end-column="12" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/scratch.py">
       <provider selected="true" editor-type-id="text-editor">
+<<<<<<< HEAD
+        <state relative-caret-position="210">
+          <caret line="644" column="71" lean-forward="true" selection-start-line="644" selection-start-column="71" selection-end-line="644" selection-end-column="71" />
+=======
+        <state relative-caret-position="303">
+          <caret line="68" column="107" selection-start-line="68" selection-start-column="107" selection-end-line="68" selection-end-column="107" />
+>>>>>>> a5ebf27186b7ced0b8ec797b5c3b6569314ba0aa
+          <folding>
+            <element signature="e#0#12#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/LTPQandA.py">
+      <provider selected="true" editor-type-id="text-editor">
+<<<<<<< HEAD
         <state relative-caret-position="551">
           <caret line="86" column="26" selection-start-line="86" selection-start-column="26" selection-end-line="86" selection-end-column="26" />
           <folding>
             <element signature="e#0#12#0" expanded="true" />
           </folding>
+=======
+        <state relative-caret-position="1170">
+          <caret line="153" column="39" selection-start-line="153" selection-start-column="39" selection-end-line="153" selection-end-column="39" />
+>>>>>>> a5ebf27186b7ced0b8ec797b5c3b6569314ba0aa
         </state>
       </provider>
     </entry>
