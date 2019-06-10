@@ -1,12 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="bb386296-4942-4b8a-90c2-ec372ffaafb5" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/LTP.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/LTP.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LTPQandA.py" beforeDir="false" afterPath="$PROJECT_DIR$/LTPQandA.py" afterDir="false" />
-    </list>
+    <list default="true" id="bb386296-4942-4b8a-90c2-ec372ffaafb5" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -18,8 +13,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/LTPQandA.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="219">
-              <caret line="348" column="25" selection-start-line="348" selection-start-column="25" selection-end-line="348" selection-end-column="25" />
+            <state relative-caret-position="210">
+              <caret line="644" column="71" lean-forward="true" selection-start-line="644" selection-start-column="71" selection-end-line="644" selection-end-column="71" />
               <folding>
                 <element signature="e#20#30#0" expanded="true" />
               </folding>
@@ -30,8 +25,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/scratch.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="570">
-              <caret line="39" column="24" selection-start-line="39" selection-start-column="14" selection-end-line="39" selection-end-column="60" />
+            <state relative-caret-position="551">
+              <caret line="86" column="26" selection-start-line="86" selection-start-column="26" selection-end-line="86" selection-end-column="26" />
               <folding>
                 <element signature="e#0#12#0" expanded="true" />
               </folding>
@@ -168,8 +163,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-1" y="25" width="1922" height="1056" extended-state="6" />
-    <editor active="true" />
+    <frame x="-1" y="24" width="1682" height="1027" extended-state="6" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.051901028" />
       <window_info id="Structure" order="1" weight="0.25" />
@@ -184,7 +178,7 @@
       <window_info anchor="bottom" id="Version Control" order="7" weight="0.32899022" />
       <window_info anchor="bottom" id="Event Log" order="8" side_tool="true" />
       <window_info anchor="bottom" id="Python Console" order="9" weight="0.32899022" />
-      <window_info active="true" anchor="bottom" id="Terminal" order="10" visible="true" weight="0.31122994" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="10" visible="true" weight="0.3030303" />
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
@@ -202,8 +196,8 @@
     <entry file="file://$USER_HOME$/Downloads/nqueens.py" />
     <entry file="file://$PROJECT_DIR$/LTPQandA.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="219">
-          <caret line="348" column="25" selection-start-line="348" selection-start-column="25" selection-end-line="348" selection-end-column="25" />
+        <state relative-caret-position="210">
+          <caret line="644" column="71" lean-forward="true" selection-start-line="644" selection-start-column="71" selection-end-line="644" selection-end-column="71" />
           <folding>
             <element signature="e#20#30#0" expanded="true" />
           </folding>
@@ -212,8 +206,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/scratch.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="570">
-          <caret line="39" column="24" selection-start-line="39" selection-start-column="14" selection-end-line="39" selection-end-column="60" />
+        <state relative-caret-position="551">
+          <caret line="86" column="26" selection-start-line="86" selection-start-column="26" selection-end-line="86" selection-end-column="26" />
           <folding>
             <element signature="e#0#12#0" expanded="true" />
           </folding>
