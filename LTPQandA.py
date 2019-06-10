@@ -150,13 +150,11 @@ example_queries = [
 error_msg = "No data found. Try paraphrasing the question."
 user_msg = "Please enter a question or quit program by pressing control-D."
 
-'''This function print the examples above and runs the search for answers on them one line at a time '''
-
-
+'''This function prints the examples above and runs the search for answers on them one line at a time '''
 def print_example_queries():
     for index, example in enumerate(example_queries):
         print("(" + str(index + 1) + ") " + example)
-        create_and_fire_query(example)
+        # create_and_fire_query(example)
     # Op dit moment vindt quick find 35 and slow find 8 antwoorden, 4 antwoorden niet gevonden
     # Niet al deze antwoorden zijn correct!
     print("Quick finds = " + str(quick_find) + " Slow finds = " + str(slow_find) + " Not founds = " + str(not_found))
@@ -261,7 +259,7 @@ def find_age(entity, date_begin):
     print(str(year) + " years old")
 
 
-'''This function print the answers based on their found property and entity tags'''
+'''This function prints the answers based on their found property and entity tags'''
 def print_answer(property, entity, is_count, is_age):
     date = False
     # Is the property a birth date, death, disappeared, inception, abolished, publication, first performance  ?
@@ -359,16 +357,13 @@ def instance_of(ent_tag, is_age):
             if item[var]['value'] == "human":
                 if is_age:
                     name = 'date of birth'
-                else:
+                else: # i.e. location
                     name = 'place of birth'
             elif item[var]['value'] == "band":
                 if is_age:
                     name = 'inception'
-                else:
-                    name = 'location of formation'
-                    print("found location of formation")
-            else:
-                name = 'date of publication'
+                else:  # i.e. location
+                    name = 'place of formation'
     return name
 
 
@@ -477,7 +472,7 @@ def create_and_fire_query(line):
         if token.text == "age" or token.text == "old":  # if the question contains age or old, the user request an age
             print("AGE QUESTION")
             is_age = True
-        if token.text in location_words:  # sentences starting with where are about locations
+        if token.text in location_words:  # sentences starting with "where" are about locations
             is_location = True
 
     '''Look for entity'''
@@ -573,9 +568,6 @@ def create_and_fire_query(line):
                     else:
                         prop_name = prop_name + things_of[token.text]
                         print("Property: -" + prop_name + "- Token text of Adverbial modifier (advmod)")
-                    # if token.head.lemma_ != "long" and token.head.lemma_ != "old":
-                    #     print("Property: " + prop_name + " of- Long Adverbial modifier (advmod)")
-                    #     prop_name = prop_name + " of "
 
             elif token.dep_ == "ROOT" or token.dep_ == "advcl":
                 if (token.lemma_ in roots):
@@ -722,7 +714,7 @@ def find_answer(property_name, entity_name, entity_tag, is_count, is_age, is_loc
     return property_tag, found_result
 
 
-'''This function is for yes/no question. It evaluates if there's a property in the sentence. Then it queries
+'''This function is for yes/no questions. It evaluates if there's a property in the sentence. Then it queries
    the database with the compare answer function and returns if it found the same (entity) answer as was
    found in the sentence'''
 def find_property_answer(parse, entity_tag, entity_name, entity_tag2, entity_name2):
@@ -752,7 +744,7 @@ def find_property_answer(parse, entity_tag, entity_name, entity_tag2, entity_nam
         else:
             return "Entity_different"  # The entity and the answer don't correspond (e.g. asking if Billy is the Wife of Miley Cyrus)
 
-'''This function is for yes/no question. It queries the database to see if it finds the second entity in 
+'''This function is for yes/no questions. It queries the database to see if it finds the second entity in 
    the sentence, after which it compares the queried and sentence entity. 
    Finally, it returns the answer to find_property_answer'''
 def compare_answer(prop_tag, entity_tag, entity_name2):
