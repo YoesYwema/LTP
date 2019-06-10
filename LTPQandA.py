@@ -27,23 +27,19 @@ location_words = ["Where", "city", "place", "country", "location"]
 questions_nog_niet_goed_9_jun = [
     "Name the record labels of John Mayer.",
     "Which country is Queen from?",  # nog steeds queen als in monarch | United Kingdom (TAKE SECOND ENTITY AS WELL)
-    "In what year was Die Antwoord formed?",  # geeft 1 January  2008, de publication date van een album What Year Will You Have The World?
-        "In what year was ABBA formed?" # Gaat verkeerd omdat er wel een P in tags zit en wordt er aan geplakt
-    "In what year did Prince die",  # geeft 1 January 2008, de publication date van een album What Year Will You Have The World?
     "What year was the song ’1999’ by Prince published?",  # Did prints 1999-01-01T00:00:00Z | 27 October 1982 | Werkt nog niet
-    "What does EDM stand for?",  # definition | werkt nog niet
-    "What is a kazoo?",  # definition | American musical instrument | werkt niet
-    "Did Louis Armstrong influence the Beatles?",  # PROPN + PROPN dobj | NOT DEFINED
-    "Was Eminem born in St. Joseph?", # werkt niet | correct answer: Yes
+    "Did Prince die?",  # PROPN + VERB ROOT USe is death    #geeft goede antwoord, maar Prince entity verkeerd...  (MAYBE USE INSTANCE OF HUMAN?)
     "Was ABBA formed in 1989?", # goed antwoord maar niet goede manier
     "Was ABBA formed in 1972?" #verkeerd antwoord
     "Did Michael Jackson play in a band?",  # PROPN + NOUN pobj (DOESNT WORK SINCE BAND IS THE MEMBER OF PROPERTY!!!) Replace? Geeft No | correct answer: Yes
     "Do The Fall make indie rock?", # Fall is tweede entity dus DISAMBIGUATION?
     "Do The Fall make punk rock?" , # ziet The Fall als Fall = herfst\
     "Did Michael Jackson play in the Jackson 5?", # Only works with Five | geeft wel Yes
-    "Did Prince die?",  # PROPN + VERB ROOT USe is death    #geeft goede antwoord, maar Prince entity verkeerd...  (MAYBE USE INSTANCE OF HUMAN?)
     "Who are the members of Metallica?",#Niet het qualified antwoord!
     "Is deadmau5 only a composer?",  # PROPN + NOUN attr  (IT ANSWERS CORRECTLY BUT DUNNO WHY HAHA)
+    "Is Green Day's record label Epitaph Records?",
+
+    "How many strings does a violin usually have?",
 ]
 
 example_queries = [
@@ -135,6 +131,15 @@ example_queries = [
     "Was Eminem born in St. Joseph?", # werkt niet | correct answer: Yes
     "Was ABBA formed in 1989?", # goed antwoord maar niet goede manier
     "Was ABBA formed in 1972?" #verkeerd antwoord
+    
+    "In what year was Die Antwoord formed?",  # geeft 1 January  2008, de publication date van een album What Year Will You Have The World?
+    "In what year was ABBA formed?", # Gaat verkeerd omdat er wel een P in tags zit en wordt er aan geplakt
+    "In what year did Prince die", # geeft 1 January 2008, de publication date van een album What Year Will You Have The World?
+    "What does EDM stand for?",  # definition | werkt nog niet
+    "What is a kazoo?",  # definition | American musical instrument | werkt niet
+    "Did Louis Armstrong influence the Beatles?",  # PROPN + PROPN dobj | NOT DEFINED
+    "Was Eminem born in St. Joseph?",  # werkt niet | correct answer: Yes
+    "Does Green Day make alternative rock?",
 ]
 
 # questions to test extra things on
@@ -149,7 +154,7 @@ user_msg = "Please enter a question or quit program by pressing control-D."
 
 
 def print_example_queries():
-    for index, example in enumerate(questions_nog_niet_goed_9_jun):
+    for index, example in enumerate(example_queries):
         print("(" + str(index + 1) + ") " + example)
         create_and_fire_query(example)
     # Op dit moment vindt quick find 35 and slow find 8 antwoorden, 4 antwoorden niet gevonden
@@ -491,7 +496,7 @@ def create_and_fire_query(line):
         else:
             entity_name2 = ent_name.lemma_.replace("'s", "").replace("'", "")
             entity_tag2 = find_tag(entity_name2, ENTITY, FIRST_TRY, is_age, '', is_location)
-            print('Found slow entity2 in parse.ents. Entity_tag: -' + str(entity_name2) + '- entity: -' + str(entity_tag2) + "-")
+            print('Found slow entity2 in parse.ents. Entity_tag2: -' + str(entity_name2) + '- entity2: -' + str(entity_tag2) + "-")
             if is_yes_no:
                 found_result = answer_yes_no(parse, entity_tag, entity_name, is_yes_no, found_result, entity_tag2, entity_name2)
 
@@ -499,12 +504,14 @@ def create_and_fire_query(line):
         for ent_name in parse:
             # Seems dangerous to look for pobj here because you're most often looking for the subject of the sentence?
             if ent_name.pos_ == 'PROPN' or ent_name.dep_ == 'pobj' or ent_name.dep_ == 'nsubj':
-                # IF compound !!!
-                entity_name = ent_name.lemma_.replace("'s", "").replace("'", "")
+                if ent_name.dep_ == 'compound':
+                    entity_name = " ".join((ent_name.lemma_, ent_name.head.lemma_))# IF compound !!!
+                else:
+                    entity_name = ent_name.lemma_.replace("'s", "").replace("'", "")
                 entity_tag = find_tag(entity_name, ENTITY, FIRST_TRY, is_age, '', is_location)
                 print('Found slow entity as proper noun or pobj. Query_ent: -' + str(entity_name) + '- entity: -' + str(entity_tag) + "-")
-                #break  TO BREAK OR NOT TO BREAK
-
+                if entity_name != 'who':
+                    break  #TO BREAK OR NOT TO BREAK MOTHERFUCKERS
     if is_yes_no and not found_result:
         # The loop always continues until the last word in the sentence, which is nice, since English (yes/no) is structured according to Subject Verb Object, and we need object
         for word in parse:
@@ -594,6 +601,7 @@ def create_and_fire_query(line):
                     else:
                         ent_name = ent_name + token.text + " "
                         print("Entity: -" + ent_name + "- P is not in token tag and prop is not in things_of.")
+                        # DO THIS UPSTAIRS AS WELL!!!
                         if not prop_name and token.head.lemma_ == "in":
                             print("who are in?")
                             prop_name = "has part"
@@ -684,14 +692,14 @@ def create_and_fire_query(line):
         if not found_result and line:  # and line means the line is not empty
             # Property empty so probably asking for a description
             print("HAAA")
-            print(maybe_ent)
             # For what is ... questions
             if entity_tag != 'None':
                 give_description(entity_tag)
             else:
-                print(maybe_ent)
-                entity_tag = find_tag(maybe_ent, ENTITY, FIRST_TRY, False, '', False)
-                give_description(entity_tag)
+                if maybe_ent:
+                    print(maybe_ent)
+                    entity_tag = find_tag(maybe_ent, ENTITY, FIRST_TRY, False, '', False)
+                    give_description(entity_tag)
             print(error_msg)
             global not_found
             not_found += 1
@@ -781,7 +789,8 @@ def main(argv):
     global slow_find
     global not_found
     quick_find = slow_find = not_found = 0
-    # print_example_queries()
+    #print_example_queries()
+    #print_example_queries()
     print(user_msg)
     for line in sys.stdin:
         # line = example_queries[int(line)-1].rstrip()

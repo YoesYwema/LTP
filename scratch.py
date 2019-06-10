@@ -35,10 +35,10 @@ import sys
 #
 # What is the genre of Dio's music?
 # What is the gender of Sting
-
-nlp = spacy.load('en')
-result = nlp("")
 '''
+nlp = spacy.load('en')
+result = nlp("Who are in The Beatles?")
+
 for w in result:
     print("{} {} {}".format(w.lemma_, w.dep_, w.head.lemma_))
 for w in result:
