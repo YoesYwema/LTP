@@ -500,13 +500,14 @@ def create_and_fire_query(line):
             # Seems dangerous to look for pobj here because you're most often looking for the subject of the sentence?
             if ent_name.pos_ == 'PROPN' or ent_name.dep_ == 'pobj' or ent_name.dep_ == 'nsubj':
                 if ent_name.dep_ == 'compound':
-                    entity_name = " ".join((ent_name.lemma_, ent_name.head.lemma_))# IF compound !!!
+                    entity_name = " ".join((ent_name.lemma_, ent_name.head.lemma_))  # IF compound !!!
                 else:
                     entity_name = ent_name.lemma_.replace("'s", "").replace("'", "")
                 entity_tag = find_tag(entity_name, ENTITY, FIRST_TRY, is_age, '', is_location)
                 print('Found slow entity as proper noun or pobj. Query_ent: -' + str(entity_name) + '- entity: -' + str(entity_tag) + "-")
                 if entity_name != 'who':
                     break  #TO BREAK OR NOT TO BREAK MOTHERFUCKERS
+
     if is_yes_no and not found_result:
         # The loop always continues until the last word in the sentence, which is nice, since English (yes/no) is structured according to Subject Verb Object, and we need object
         for word in parse:
