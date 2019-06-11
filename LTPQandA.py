@@ -684,7 +684,6 @@ def find_property_answer(parse, entity_tag, entity_name, entity_tag2, entity_nam
             prop_name = prop_name + " of"
             prop_tag = find_tag(prop_name, PROPERTY, FIRST_TRY, False, entity_tag2, False)
 
-    if prop_tag == EMPTY or not prop_tag or entity_name == 'None' or prop_tag == 'empty':  # Else property tag is empty, so we assume no property has been found
         return "No_property_in_sentence"  # return that the answer of the yes/no entity query should be respected
     else:
         same_result = compare_answer(prop_tag, entity_tag2, entity_name)

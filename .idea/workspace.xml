@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="bb386296-4942-4b8a-90c2-ec372ffaafb5" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/LTPQandA.py" beforeDir="false" afterPath="$PROJECT_DIR$/LTPQandA.py" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/venv/" />
@@ -17,8 +16,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/LTPQandA.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="248">
-              <caret line="686" column="91" selection-start-line="686" selection-start-column="91" selection-end-line="686" selection-end-column="91" />
+            <state relative-caret-position="143">
+              <caret line="731" column="21" selection-start-line="731" selection-start-column="21" selection-end-line="731" selection-end-column="21" />
             </state>
           </provider>
         </entry>
@@ -180,8 +179,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/LTPQandA.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="248">
-          <caret line="686" column="91" selection-start-line="686" selection-start-column="91" selection-end-line="686" selection-end-column="91" />
+        <state relative-caret-position="143">
+          <caret line="731" column="21" selection-start-line="731" selection-start-column="21" selection-end-line="731" selection-end-column="21" />
         </state>
       </provider>
     </entry>
