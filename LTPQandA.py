@@ -265,22 +265,28 @@ def print_answer(property, entity, is_count, is_age):
     # If no answer is found return empty
     if len(data['results']['bindings']) == EMPTY:
         return EMPTY
+    answerCount = len(data['results']['bindings'])
     for item in data['results']['bindings']:
         for var in item:
             if property == 'P2047':  # = Duration
-                print("\t\t\t\t\t\t\t\t\t   ANSWER: " + item[var]['value'] + " seconds")
+                print(item[var]['value'] + " seconds")
             else:
                 if date:
                     date = datetime.strptime(item[var]['value'], '%Y-%m-%dT%H:%M:%SZ')
                     if is_age:
                         find_age(entity, date)
                     else:
-                        print(" \t\t\t\t\t\t\t\t\t  ANSWER: " + str(date.day), str(date.strftime("%B")), str(date.year))
+                        print(str(date.day), str(date.strftime("%B")), str(date.year), end = "")
                 if not date:
                     # Only print counts higher than 0 (else it didn't find one and the list is empty)
                     if is_count and item[var]['value'] == '0':
                         return False
-                    print(" \t\t\t\t\t\t\t\t\t  ANSWER: " + item[var]['value'])
+                    print(item[var]['value'], end = "")
+                    answerCount = answerCount - 1
+                    if answerCount > 0:
+                        print("\t", end = "")
+                    else:
+                        print(" ")
     return True
 
 
