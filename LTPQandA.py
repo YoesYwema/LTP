@@ -27,6 +27,7 @@ location_words = ["Where", "city", "place", "location"]
 yes_no_words = ["do", "Do", "be", "Be", "have", "Have"]
 
 questions_nog_niet_goed_9_jun = [
+    
     "What year was the song ’1999’ by Prince published?",
     # Did prints 1999-01-01T00:00:00Z | 27 October 1982 | Werkt nog niet
     "Was ABBA formed in 1989?",  # goed antwoord maar niet goede manier
@@ -36,8 +37,7 @@ questions_nog_niet_goed_9_jun = [
     "Do The Fall make indie rock?",  # Fall is tweede entity dus DISAMBIGUATION?
     "Do The Fall make punk rock?",  # ziet The Fall als Fall = herfst\
     "Is deadmau5 only a composer?",  # PROPN + NOUN attr  (IT ANSWERS CORRECTLY BUT DUNNO WHY HAHA)
-
-    "Does Michael Jackson have a nickname"  # only entity and propery. We need to check if ent + prop has an answer
+    "Does Green Day make alternative rock?",  # NOUN nsubj + NN amod # Yes
     "How many strings does a violin usually have?",  # This gives an answer haha, because it just prints description
 ]
 
@@ -128,13 +128,13 @@ example_queries = [
     "Do The Fall make indie rock?",
     # was gegeven door lecturer als The Fals, maar die bestaat niet? Niet in de eerste 250 entries op wikidata iig
     "Do The Fall make punk rock?",  # ziet The Fall als Fall = herfst
-    "Does Green Day make alternative rock?",  # NOUN nsubj + NN amod # Yes
     "Is Michael Jackson male?",  # PROPN + NN attr # Yes
     "Is Miley Cyrus the daughter of Billy Ray Cyrus?",  # PROPN + compound PROPN (only last word cyrus is pobj) | Yes
     "Is Miley Cyrus the father of Billy Ray Cyrus?",  # No
     "Is Miley Cyrus' father Billy Ray Cyrus?",
     "Is Michael Jackson's nickname Bambi?",
     "Does deadmau5 make house music?",
+    "Does Michael Jackson have a nickname"  # only entity and propery. We need to check if ent + prop has an answer
     # NOUN + NOUN compound (" ".join((ent_name2.lemma_, ent_name2.head.lemma_))) | Yes
     "Does Felix Jaehn come from Hamburg?",  # PROPN + PROPN npadvmod | Yes
     "Does Felix Jaehn come from Berlin?",  # PROPN + PROPN npadvmod | No
@@ -172,7 +172,7 @@ user_msg = "Please enter a question or quit program by pressing control-D."
 
 
 def print_example_queries():
-    for index, example in enumerate(example_queries):
+    for index, example in enumerate(questions_nog_niet_goed_9_jun):
         print("(" + str(index + 1) + ") " + example)
         # create_and_fire_query(example)
     # Op dit moment vindt quick find 35 and slow find 8 antwoorden, 4 antwoorden niet gevonden
@@ -480,10 +480,34 @@ def yes_no_query(entity, entity2, entity_name2):
         if data['boolean']:
             print(" \t\t\t\t\t\t\t\t\t   ANSWER: Yes")
         else:
-            # Also try to read the entity name as a property e.g. Does Michael Jackson have a nickname?
-            
-            print(" \t\t\t\t\t\t\t\t\t   ANSWER: No")
+            # Also try to read the entity name as a property? e.g. Does Michael Jackson have a nickname?
+            property_tag = find_tag(entity_name2, PROPERTY, FIRST_TRY, False, '', False)
+            answer_ent_as_prop = ent_prop_answer(property_tag, entity, '')
+            if answer_ent_as_prop:
+                print(" \t\t\t\t\t\t\t\t\t   ANSWER: Yes")
+            else:
+                print(" \t\t\t\t\t\t\t\t\t   ANSWER: No")
     return True
+
+def ent_prop_answer(prop_tag, entity_tag, entity_name2):
+    print("Y/N: prop tag: " + prop_tag + " ent tag: " + entity_tag + " ent name 2: " + entity_name2)
+    query = '''
+         SELECT ?property WHERE {
+             wd:%s wdt:%s ?prop.
+             SERVICE wikibase:label {
+                 bd:serviceParam wikibase:language "en".
+                 ?prop rdfs:label ?property
+             }
+         }''' % (entity_tag, prop_tag)
+    print("Using ent_tag: " + entity_tag + " and prop_tag: " + prop_tag + " for comparison query")
+    data = requests.get(sparql_url,
+                        params={'query': query, 'format': 'json'}).json()
+
+    # If no answer is found return empty
+    if data['results']['bindings']:
+        return True
+    else:
+        return False
 
 
 '''This function first looks for entities and properties given the line'''
@@ -574,11 +598,14 @@ def create_and_fire_query(line):
 
             if word.dep_ == 'attr' or word.dep_ == 'npadvmod' or word.dep_ == 'dobj' \
                     or word.dep_ == 'pobj' or word.dep_ == 'ROOT' or word.dep_ == 'nsubj':
-                if len(parse) <= counter + 1:  # To not go out of bounds! STILL NEEDS TESTING!!!!!!!!
+                print(str(len(parse)) + " " + str(counter))
+                if counter + 1 <= len(parse):  # To not go out of bounds! STILL NEEDS TESTING!!!!!!!!
+                    print("Im here")
                     if parse[counter+1].dep_ == 'nummod':  # if the next word is a numerical modifier, add it to entity e.g. Jackson 5
+                        print("adding: " + parse[counter+1].lemma_)
                         entity_name2 = word.lemma_ + ' ' + parse[counter+1].lemma_
-                else:
-                    entity_name2 = word.lemma_
+                    else:
+                        entity_name2 = word.lemma_
                 if entity_name == entity_name2 or entity_name2 == 'be':  # If it found the same name find another one or it's a ROOT 'be'
                     print("SAME NAME")
                     continue
@@ -604,7 +631,7 @@ def create_and_fire_query(line):
                 # finds things like 'make' as well as normal entities
                 #     break
 
-        if entity_tag2 != 'None':  # if entity 2 is not empty find a yes/no answer
+        if entity_tag2 != 'None': # if entity 2 is not empty find a yes/no answer
             found_result = answer_yes_no(parse, entity_tag, entity_name, is_yes_no, found_result, entity_tag2,
                                          entity_name2)
     print("ent now: " + entity_name)
@@ -855,7 +882,6 @@ def main(argv):
     global slow_find
     global not_found
     quick_find = slow_find = not_found = 0
-    # print_example_queries()
     # print_example_queries()
     print(user_msg)
     # print(find_tag("place of death", ENTITY, 0, False, "Q1203", True))
