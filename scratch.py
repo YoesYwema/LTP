@@ -37,7 +37,7 @@ import sys
 # What is the gender of Sting
 
 nlp = spacy.load('en')
-'''result = nlp("Who are in The Beatles?")
+result = nlp("Do The Fall make indie rock?")
 
 for w in result:
     print("{} {} {}".format(w.lemma_, w.dep_, w.head.lemma_))
@@ -60,7 +60,7 @@ for token in result:
     if token.dep_ == 'compound' and token.tag_ == 'NN':
         property = " ".join((token.lemma_, token.head.lemma_))
         print(property)
-'''
+
 
 for q in sys.stdin :
     parse = nlp(q.strip())

@@ -29,8 +29,6 @@ yes_no_words = ["do", "Do", "be", "Be", "have", "Have"]
 questions_nog_niet_goed_9_jun = [
     "What year was the song ’1999’ by Prince published?",
     # Did prints 1999-01-01T00:00:00Z | 27 October 1982 | Werkt nog niet
-    "Did Prince die?",
-    # PROPN + VERB ROOT USe is death    #geeft goede antwoord, maar Prince entity verkeerd...  (MAYBE USE INSTANCE OF HUMAN?)
     "Was ABBA formed in 1989?",  # goed antwoord maar niet goede manier
     "Was ABBA formed in 1972?"  # verkeerd antwoord
     "Did Michael Jackson play in a band?",  # WE MOETEN BAND VERANDEREN NAAR PART OF?
@@ -39,7 +37,8 @@ questions_nog_niet_goed_9_jun = [
     "Do The Fall make punk rock?",  # ziet The Fall als Fall = herfst\
     "Is deadmau5 only a composer?",  # PROPN + NOUN attr  (IT ANSWERS CORRECTLY BUT DUNNO WHY HAHA)
 
-    "How many strings does a violin usually have?",
+    "Does Michael Jackson have a nickname"  # only entity and propery. We need to check if ent + prop has an answer
+    "How many strings does a violin usually have?",  # This gives an answer haha, because it just prints description
 ]
 
 example_queries = [
@@ -124,6 +123,7 @@ example_queries = [
     "Did Michael Jackson play in the Jackson Five?",  # Yes
     "Did Michael Jackson play in the Jackson 5?",
     "Is Green Day's record label Epitaph Records?",
+    "Did Prince die?",
     # PROPN + NOUN pobj (DOESNT WORK SINCE BAND IS THE MEMBER OF PROPERTY!!!) Replace? Geeft No | correct answer: Yes
     "Do The Fall make indie rock?",
     # was gegeven door lecturer als The Fals, maar die bestaat niet? Niet in de eerste 250 entries op wikidata iig
@@ -214,8 +214,11 @@ def give_description(entity):
             print("\t\t\t\t\t\t\t\t\t   ANSWER: " + item[var]['value'])
 
 
-def is_dead(entity, is_yes_no):
+def is_dead(entity_name, entity_tag, is_yes_no):
     death = False
+    is_ent_human = instance_of(entity_tag, False)
+    if is_ent_human != 'place of birth':  # 'place of birth' is what the function returns for 'humans'
+        entity_tag = find_tag(entity_name, ENTITY, 1, False, '', False)  # Find the second entity (which is likely human)
     query = '''
             SELECT ?property WHERE { 
                 wd:%s wdt:%s ?prop.
@@ -223,7 +226,7 @@ def is_dead(entity, is_yes_no):
                     bd:serviceParam wikibase:language "en".
                     ?prop rdfs:label ?property
                 }
-            }''' % (entity, "P570")  # P570 = date of death
+            }''' % (entity_tag, "P570")  # P570 = date of death
     death_date = requests.get(sparql_url,
                               params={'query': query, 'format': 'json'}).json()
 
@@ -231,7 +234,7 @@ def is_dead(entity, is_yes_no):
         print("not dead")
         return False, 0, 0, 0
 
-    print(entity)
+    print(entity_tag)
     for item in death_date['results']['bindings']:
         for var in item:
             date_end = datetime.strptime(item[var]['value'], '%Y-%m-%dT%H:%M:%SZ')
@@ -249,7 +252,7 @@ def is_dead(entity, is_yes_no):
 
 
 def find_age(entity, date_begin):
-    death, year_of_death, month_of_death, date_of_death = is_dead(entity, False)
+    death, year_of_death, month_of_death, date_of_death = is_dead('', entity, False)  # Do dead questions still work???? I CHANGED THE AMOUNT OF ARGUMENTS
 
     year_of_birth = int(str(date_begin.strftime("%Y")), 10)
     month_of_birth = int(str(date_begin.strftime("%m")), 10)
@@ -425,13 +428,13 @@ def answer_yes_no(parse, entity_tag, entity_name, is_yes_no, found_result, entit
     dead_or_alive = death_in_yes_no(parse)
     if dead_or_alive:
         if dead_or_alive == 'died':
-            if is_dead(entity_tag, is_yes_no):
+            if is_dead(entity_name, entity_tag, is_yes_no):
                 print(" \t\t\t\t\t\t\t\t\t   ANSWER: Yes")
             else:
                 print(" \t\t\t\t\t\t\t\t\t   ANSWER: No")
             found_result = True
         if dead_or_alive == 'lives':
-            if is_dead(entity_tag, is_yes_no):
+            if is_dead(entity_name, entity_tag, is_yes_no):
                 print(" \t\t\t\t\t\t\t\t\t   ANSWER: No")
             else:
                 print(" \t\t\t\t\t\t\t\t\t   ANSWER: Yes")
@@ -477,6 +480,8 @@ def yes_no_query(entity, entity2, entity_name2):
         if data['boolean']:
             print(" \t\t\t\t\t\t\t\t\t   ANSWER: Yes")
         else:
+            # Also try to read the entity name as a property e.g. Does Michael Jackson have a nickname?
+            
             print(" \t\t\t\t\t\t\t\t\t   ANSWER: No")
     return True
 
