@@ -869,6 +869,13 @@ def compare_answer(prop_tag, entity_tag, entity_name2):
                 return False
                 print("FALSE")
 
+def print_from_file():
+    with open('questions_final.txt') as f:
+        for i, line in enumerate(f, 1):
+            # print(line)
+            line = line.rstrip().lstrip(str(i)).lstrip("\t")
+            print(str(i), "\t", end="")
+            create_and_fire_query(line)
 
 def main(argv):
     global quick_find
@@ -876,13 +883,11 @@ def main(argv):
     global not_found
     quick_find = slow_find = not_found = 0
     # print_example_queries()
-    print(user_msg)
-    # print(find_tag("place of death", ENTITY, 0, False, "Q1203", True))
+    print_from_file()
     for line in sys.stdin:
-        # line = example_queries[int(line)-1].rstrip()
+        print(user_msg)
         line = line.rstrip()
         create_and_fire_query(line)
-        print(user_msg)
 
 
 # Is this file ran directly from python or is it being imported?
