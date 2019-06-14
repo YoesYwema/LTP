@@ -1,0 +1,10 @@
+1	What is the birthdate 
+2	From which album is Dancing Queen? 
+3	What is the birth name of Dave Grohl? 
+4	When was Lovely Day by Bill Withers released?
+5	What are Michael Jackson's causes of death? 
+6	What country is Kraftwerk from?
+7	Did Mozart play on violin?
+8	How many children does Chris Martin have?
+9	In what genres does Taylor Swift perform?
+10	Stewart Copeland was the drummer with which band?

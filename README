@@ -1,0 +1,7 @@
+The current program was created by Marieke Bouma, Indy Roode, Jori Blankestijn and Yoes Ywema (Team Queen)
+
+You can run the program in the terminal by typing: python3 final.py
+This way of running the program first answers all questions in "test_questions.txt" if this file exists. It then gives you a welcome message asking you to type in a new question.
+If you would like to let the program answer a couple of questions in a row, you can also add these to example_queries and uncomment print_example_queries().
+
+Lastly, you can run the program for one question by typing: echo "[QUESTION]" | python3 final.py. When doing this, note that the "test_questions.txt" file will still be read and answered unless you comment out line 745: "print_from_file()".

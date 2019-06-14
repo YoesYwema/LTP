@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+# !/usr/bin/python3
 
 import sys
 import requests
@@ -41,13 +41,14 @@ example_queries = [
     "Who was the father of Michael Jackson?",  # Joe Jackson
     "Who is the stepparent of Neneh Cherry",  # Don Cherry
     "Who are the members of Metallica?",  # Lars Ulrich, Dave Mustaine, Cliff Burton, Robert Trujillo, Jason Newsted,
-    "Who are the members of Nirvana?", # Ron McGovney,Kirk Hammett, James Hetfield, Lloyd Grant
+    "Who are the members of Metallica?",  # Ron McGovney,Kirk Hammett, James Hetfield, Lloyd Grant
     "Who is the wife of John Mayer?",  # Heeft geen vrouw
     # List questions
     "Name the record labels of John Mayer.",  # zoekt naar name; "record label" werkt bij The Clash wel
     "Name the partners of Bruce Springsteen.",  # Patti Scialfa, Julianne Phillips | zoekt niet naar name
-    "what are the genres of the White Stripes?", # Alternative rock, blues rock, garage rock, post-punk revival, punk blues.
-    "Who were in Queen?", # Freddie Mercury, Brian May, Roger Taylor, John Deacon
+    "what are the genres of the White Stripes?",
+    # Alternative rock, blues rock, garage rock, post-punk revival, punk blues.
+    "Who were in Queen?",  # Freddie Mercury, Brian May, Roger Taylor, John Deacon
     "Who were the members of The Beatles",  # John Lennon, Paul McCartney, Ringo Starr, George Harrison
     "Who are the children of Phill Collins?",  # Lily Collins, Joely Collins
     "which were the pseudonyms of David Bowie",  # Ziggy Stardust, Thin White Duke, David Bowie
@@ -64,7 +65,7 @@ example_queries = [
     "Which country is Queen from?",  # nog steeds queen als in monarch | United Kingdom
     "What year was the song ’1999’ by Prince published?",
     "What is the genre of ABBA?",  # pop music, glam rock, dance music, pop rock, Europop, Euro disco
-    "What does EDM stand for?",  # definition | werkt nog niet 
+    "What does EDM stand for?",  # definition | werkt nog niet
     "What is a kazoo?",  # definition | American musical instrument | werkt niet
     "How long is Bohemian Rhapsody?",  # 134 seconds
     "How old is The Dark Side Of The Moon?",  # 43 years old
@@ -101,14 +102,13 @@ example_queries = [
     "Is Miley Cyrus' father Billy Ray Cyrus?",
     "Is Michael Jackson's nickname Bambi?",
     "Does deadmau5 make house music?",
-    "Does Michael Jackson have a nickname",  # only entity and propery. We need to check if ent + prop has an answer
+    "Does Michael Jackson have a nickname?",  # only entity and propery. We need to check if ent + prop has an answer
     "Does Felix Jaehn come from Hamburg?",  # PROPN + PROPN npadvmod | Yes
     "Does Felix Jaehn come from Berlin?",  # PROPN + PROPN npadvmod | No
     "Is deadmau5 only a composer?",  # PROPN + NOUN attr  (IT ANSWERS CORRECTLY BUT DUNNO WHY HAHA)
     "Is deadmau5 a composer?",  # Yes | werkt
     "Did Louis Armstrong influence the Beatles?",  # PROPN + PROPN dobj | NOT DEFINED
     "Was Eminem born in St. Joseph?",  # werkt niet | correct answer: Yes
-    "Was ABBA formed in 1989?",  # goed antwoord maar niet goede manier
     "Was ABBA formed in 1972?",  # verkeerd antwoord
     # Definition questions
     "What does EDM stand for?",  # definition | werkt nog niet
@@ -117,9 +117,8 @@ example_queries = [
     "Was Eminem born in St. Joseph?",  # werkt niet | correct answer: Yes
     "Does Greenday make alternative rock?",
     # Statements instead of questions
-    "Name the record labels of John Mayer.",
+    "Name the record labels of John Mayer."
 ]
-
 
 '''This function prints the examples above and runs the search for answers on them one line at a time '''
 def print_example_queries():
@@ -161,7 +160,7 @@ def give_description(entity):
         return EMPTY
     for item in description['results']['bindings']:
         for var in item:
-            print(item[var]['value'])
+            print( item[var]['value'])
 
 
 '''Function that returns whether someone is still alive. 
@@ -283,7 +282,7 @@ def print_answer(property, entity, is_count, is_age):
                     print(item[var]['value'], end = "")
                     answerCount = answerCount - 1
                     if answerCount > 0:
-                        print("\t", end = "")
+                        print(", ", end = "")
                     else:
                         print(" ")
     return True
@@ -406,7 +405,7 @@ def death_in_yes_no(parse):
             if death_prop.lemma_ == 'dead' or death_prop.lemma_ == 'die':
                 dead_or_alive = 'died'
             if death_prop.lemma_ == 'pass':
-                if parse[counter+1].lemma_ == 'away':
+                if parse[counter + 1].lemma_ == 'away':
                     dead_or_alive = 'died'
     return dead_or_alive
 
@@ -530,7 +529,7 @@ def create_and_fire_query(line):
 
             if word.dep_ == 'attr' or word.dep_ == 'npadvmod' or word.dep_ == 'dobj' \
                     or word.dep_ == 'pobj' or word.dep_ == 'ROOT' or word.dep_ == 'nsubj':
-                if counter + 1 <= len(parse):
+                if counter + 1 < len(parse):
                     # If the next word is a numerical modifier, add it to entity e.g. Jackson 5
                     if parse[counter + 1].dep_ == 'nummod':
                         entity_name2 = word.lemma_ + ' ' + parse[counter + 1].lemma_
@@ -689,6 +688,7 @@ def find_property_answer(parse, entity_tag, entity_name, entity_tag2, entity_nam
             prop_name = prop_name + " of"
             prop_tag = find_tag(prop_name, PROPERTY, FIRST_TRY, False, entity_tag2, False)
 
+    if prop_tag == EMPTY or not prop_tag or entity_name == 'None' or prop_tag == 'empty':  # Else property tag is empty, so we assume no property has been found
         return "No_property_in_sentence"  # return that the answer of the yes/no entity query should be respected
     else:
         same_result = compare_answer(prop_tag, entity_tag2, entity_name)
@@ -732,14 +732,21 @@ def compare_answer(prop_tag, entity_tag, entity_name2):
             else:
                 return False
 
+def print_from_file():
+    with open('test_questions.txt') as f:
+        for i, line in enumerate(f, 1):
+            # print(line)
+            line = line.rstrip().lstrip(str(i)).lstrip("\t")
+            print(str(i), "\t", end="")
+            create_and_fire_query(line)
 
 def main(argv):
     # print_example_queries()
-    print(user_msg)
+    print_from_file()
     for line in sys.stdin:
+        print(user_msg)
         line = line.rstrip()
         create_and_fire_query(line)
-        print(user_msg)
 
 
 # Is this file ran directly from python or is it being imported?
